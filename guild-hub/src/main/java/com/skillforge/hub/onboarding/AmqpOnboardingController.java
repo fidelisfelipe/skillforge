@@ -2,6 +2,7 @@ package com.skillforge.hub.onboarding;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,18 +20,24 @@ public class AmqpOnboardingController {
     private final GitHubOAuthClient oauthClient;
     private final CloudAmqpService cloudAmqp;
     private final HubUrlProvider hubUrlProvider;
+    private final String amqpUrl;
+    private final String amqpExchange;
 
     public AmqpOnboardingController(
             OnboardingTokenStore tokenStore,
             OnboardingTokenValidator tokenValidator,
             GitHubOAuthClient oauthClient,
             CloudAmqpService cloudAmqp,
-            HubUrlProvider hubUrlProvider) {
+            HubUrlProvider hubUrlProvider,
+            @Value("${spring.rabbitmq.addresses:}") String amqpUrl,
+            @Value("${guild.amqp.exchange:skillforge}") String amqpExchange) {
         this.tokenStore = tokenStore;
         this.tokenValidator = tokenValidator;
         this.oauthClient = oauthClient;
         this.cloudAmqp = cloudAmqp;
         this.hubUrlProvider = hubUrlProvider;
+        this.amqpUrl = amqpUrl;
+        this.amqpExchange = amqpExchange;
     }
 
     /** Dev clica o link → valida token (HMAC ou UUID) → redireciona para GitHub OAuth */
@@ -98,6 +105,8 @@ public class AmqpOnboardingController {
         model.addAttribute("login", login);
         model.addAttribute("email", email);
         model.addAttribute("invited", invited);
+        model.addAttribute("amqpUrl", amqpUrl);
+        model.addAttribute("amqpExchange", amqpExchange);
         return "onboarding-result";
     }
 }

@@ -4,37 +4,192 @@
   <meta charset="UTF-8">
   <title>SkillForge — Acesso AMQP</title>
   <style>
-    body { font-family: monospace; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 2rem; max-width: 480px; width: 100%; }
-    h1 { font-size: 1.2rem; margin-top: 0; }
-    .ok { color: #3fb950; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 620px;
+    }
+
+    h1 { font-size: 1.2rem; margin-bottom: 1rem; }
+    h2 { font-size: 0.9rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.5rem 0 0.75rem; }
+
+    .ok  { color: #3fb950; }
     .err { color: #f85149; }
-    .meta { color: #8b949e; font-size: 0.85rem; margin-top: 1rem; }
-    a { color: #58a6ff; }
+    .warn { color: #d29922; }
+
+    .meta { color: #8b949e; font-size: 0.85rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #21262d; }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .env-block {
+      position: relative;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 1rem 1rem 1rem 1rem;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      color: #8b949e;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+    }
+    .copy-btn:hover { color: #c9d1d9; border-color: #58a6ff; }
+    .copy-btn.copied { color: #3fb950; border-color: #3fb950; }
+
+    .var-key   { color: #79c0ff; }
+    .var-val   { color: #a5d6ff; }
+    .comment   { color: #8b949e; }
+
+    .steps { list-style: none; counter-reset: steps; }
+    .steps li {
+      counter-increment: steps;
+      padding: 0.4rem 0 0.4rem 2rem;
+      position: relative;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+    .steps li::before {
+      content: counter(steps);
+      position: absolute;
+      left: 0;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 50%;
+      width: 1.3rem;
+      height: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: #58a6ff;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #1f3d2e;
+      color: #3fb950;
+      border: 1px solid #2ea043;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      padding: 0.1rem 0.5rem;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
 <div class="card">
 
+  <!-- ── ERRO ── -->
   <div th:if="${error}">
     <h1 class="err">Acesso negado</h1>
-    <p th:text="${error}"></p>
-    <p class="meta"><a href="https://github.com/fidelisfelipe/skillforge/issues">Voltar para as issues</a></p>
+    <p th:text="${error}" style="margin-bottom:1rem;"></p>
+    <p class="meta"><a href="https://github.com/fidelisfelipe/skillforge/issues">← Voltar para as issues</a></p>
   </div>
 
+  <!-- ── SUCESSO ── -->
   <div th:if="${invited}">
-    <h1 class="ok">Convite enviado!</h1>
-    <p>Um convite foi enviado para <strong th:text="${email}"></strong>.</p>
-    <p>Acesse <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a> para aceitar.</p>
-    <p class="meta">Hero: <span th:text="${heroId}"></span> &nbsp;·&nbsp; @<span th:text="${login}"></span></p>
+    <h1 class="ok">Bem-vindo à guilda, @<span th:text="${login}"></span>! <span class="badge">hero registrado</span></h1>
+    <p style="margin-bottom:0.5rem;">
+      Convite CloudAMQP enviado para <strong th:text="${email}"></strong>.
+      Acesse <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a> e aceite o convite antes de subir o hero.
+    </p>
+
+    <h2>Próximos passos</h2>
+    <ol class="steps">
+      <li>Aceite o convite no <a href="https://customer.cloudamqp.com" target="_blank">CloudAMQP</a> usando o e-mail <strong th:text="${email}"></strong></li>
+      <li>Crie o arquivo <code>.env</code> na raiz do seu fork com as variáveis abaixo</li>
+      <li>Suba o hero: <code>cd hero-template &amp;&amp; mvn spring-boot:run</code></li>
+      <li>Confirme que o hero aparece online no dashboard da guilda</li>
+    </ol>
+
+    <h2>Configuração mínima — <code>.env</code></h2>
+
+    <div class="env-block" id="envBlock"><button class="copy-btn" onclick="copyEnv()" id="copyBtn">copiar</button><span class="comment"># Mensageria — obtida via CloudAMQP após aceitar o convite</span>
+<span class="var-key">AMQP_URL</span>=<span class="var-val" th:text="${amqpUrl}"></span>
+<span class="var-key">AMQP_SSL_ENABLED</span>=<span class="var-val">false</span>
+<span class="var-key">AMQP_EXCHANGE</span>=<span class="var-val" th:text="${amqpExchange}"></span>
+
+<span class="comment"># Identidade do hero — deve bater com manifest.json</span>
+<span class="var-key">HERO_ID</span>=<span class="var-val" th:text="${heroId}"></span></div>
+
+    <p style="font-size:0.8rem; color:#8b949e; margin-top:0.5rem;">
+      Confirme o <code>AMQP_URL</code> no painel da instância <strong>skillforge</strong> em
+      <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a>
+      após aceitar o convite.
+    </p>
+
+    <div class="meta">
+      Hero: <code th:text="${heroId}"></code> &nbsp;·&nbsp; @<span th:text="${login}"></span>
+      &nbsp;·&nbsp; <a href="https://github.com/fidelisfelipe/skillforge/issues">issues da guilda</a>
+    </div>
   </div>
 
+  <!-- ── FALHA NO INVITE ── -->
   <div th:if="${invited != null and !invited}">
-    <h1 class="err">Falha no envio</h1>
-    <p>Identificamos seu e-mail (<strong th:text="${email}"></strong>) mas o convite CloudAMQP falhou.</p>
-    <p class="meta">Entre em contato com @fidelisfelipe para acesso manual.</p>
+    <h1 class="warn">Quase lá, @<span th:text="${login}"></span></h1>
+    <p style="margin-bottom:1rem;">
+      Identificamos seu e-mail (<strong th:text="${email}"></strong>) mas o convite CloudAMQP não foi enviado automaticamente.
+      Entre em contato com <a href="https://github.com/fidelisfelipe" target="_blank">@fidelisfelipe</a> para acesso manual.
+    </p>
+
+    <h2>Configuração mínima — <code>.env</code></h2>
+    <div class="env-block" id="envBlock"><button class="copy-btn" onclick="copyEnv()" id="copyBtn">copiar</button><span class="comment"># Mensageria — solicite o AMQP_URL a @fidelisfelipe</span>
+<span class="var-key">AMQP_URL</span>=<span class="var-val">&lt;aguardando acesso&gt;</span>
+<span class="var-key">AMQP_SSL_ENABLED</span>=<span class="var-val">false</span>
+<span class="var-key">AMQP_EXCHANGE</span>=<span class="var-val" th:text="${amqpExchange}"></span>
+
+<span class="comment"># Identidade do hero</span>
+<span class="var-key">HERO_ID</span>=<span class="var-val" th:text="${heroId}"></span></div>
+
+    <div class="meta">@<span th:text="${login}"></span> &nbsp;·&nbsp; <a href="https://github.com/fidelisfelipe/skillforge/issues">issues da guilda</a></div>
   </div>
 
 </div>
+
+<script>
+  function copyEnv() {
+    const block = document.getElementById('envBlock');
+    const lines = [...block.childNodes]
+      .filter(n => n.nodeType === Node.TEXT_NODE || n.nodeName !== 'BUTTON')
+      .map(n => n.textContent)
+      .join('');
+    navigator.clipboard.writeText(lines.trim()).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'copiado!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
 </body>
 </html>
