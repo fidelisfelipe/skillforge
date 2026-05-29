@@ -1,0 +1,70 @@
+name: AMQP Onboarding Link
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  issues: write
+
+jobs:
+  post-link:
+    if: github.event.label.name == 'registered'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate and post onboarding link
+        uses: actions/github-script@v7
+        env:
+          ONBOARDING_SECRET: ${{ secrets.ONBOARDING_SECRET }}
+          HUB_PUBLIC_URL: ${{ secrets.HUB_PUBLIC_URL }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const crypto = require('crypto');
+
+            const secret     = process.env.ONBOARDING_SECRET;
+            const hubUrl     = process.env.HUB_PUBLIC_URL;
+
+            if (!secret || !hubUrl) {
+              console.log('ONBOARDING_SECRET ou HUB_PUBLIC_URL não configurados — abortando.');
+              return;
+            }
+
+            // Extrai githubLogin e heroId do corpo da issue
+            const body = context.payload.issue.body || '';
+            let manifest;
+            try {
+              const start = body.indexOf('{');
+              const end   = body.lastIndexOf('}');
+              manifest = JSON.parse(body.substring(start, end + 1));
+            } catch {
+              console.log('Manifest JSON inválido no corpo da issue — abortando.');
+              return;
+            }
+
+            const heroId      = manifest.heroId;
+            const githubLogin = manifest.githubLogin;
+            const issueNumber = context.payload.issue.number;
+
+            if (!heroId || !githubLogin) {
+              console.log('heroId ou githubLogin ausente no manifest — abortando.');
+              return;
+            }
+
+            // Gera token HMAC assinado (válido por 48h)
+            const expiry  = Date.now() + 48 * 60 * 60 * 1000;
+            const payload = `${heroId}:${githubLogin}:${issueNumber}:${expiry}`;
+            const sig     = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+            const token   = Buffer.from(JSON.stringify({ heroId, githubLogin, issueNumber, expiry, sig }))
+                              .toString('base64url');
+
+            const link = `${hubUrl}/onboard/amqp?token=${token}`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issueNumber,
+              body: `🔐 **Acesso ao CloudAMQP** — clique no link abaixo, autentique com seu GitHub e o convite será enviado automaticamente:\n\n[Obter acesso AMQP](${link}) _(expira em 48h)_`
+            });
+
+            console.log(`Link de onboarding postado na issue #${issueNumber} para @${githubLogin}`);
