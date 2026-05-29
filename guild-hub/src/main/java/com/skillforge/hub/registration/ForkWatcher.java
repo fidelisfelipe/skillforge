@@ -51,9 +51,10 @@ public class ForkWatcher {
         }
     }
 
-    @Scheduled(fixedDelay = 600_000, initialDelay = 90_000)
+    // Detecção automática movida para GitHub Actions (fork-hero-registration.yml).
+    // Mantido apenas para trigger manual via POST /api/forks/scan.
     public void scan() {
-        scanAndRegister(false);
+        scanAndRegister(true);
     }
 
     /**

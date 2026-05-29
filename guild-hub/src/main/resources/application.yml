@@ -14,11 +14,24 @@ guild:
     owner: fidelisfelipe
     repo: skillforge
     token: ${GITHUB_TOKEN:}
+    oauth:
+      client-id: ${GITHUB_CLIENT_ID:}
+      client-secret: ${GITHUB_CLIENT_SECRET:}
+  hub:
+    public-url: ${HUB_PUBLIC_URL:http://localhost:8080}
+  onboarding:
+    secret: ${ONBOARDING_SECRET:}
+  ngrok:
+    domain: ${NGROK_DOMAIN:}
+    auth-token: ${NGROK_AUTHTOKEN:}
   amqp:
     exchange: ${AMQP_EXCHANGE:skillforge}
     queue: ${AMQP_QUEUE:skillforge.problems}
   reviewer:
     max-revisions: ${MAX_REVISIONS:3}
+
+cloudamqp:
+  api-key: ${CLOUDAMQP_API_KEY:}
 
 skillforge:
   skill-validation:

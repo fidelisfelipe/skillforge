@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>SkillForge — Acesso AMQP</title>
+  <style>
+    body { font-family: monospace; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 2rem; max-width: 480px; width: 100%; }
+    h1 { font-size: 1.2rem; margin-top: 0; }
+    .ok { color: #3fb950; }
+    .err { color: #f85149; }
+    .meta { color: #8b949e; font-size: 0.85rem; margin-top: 1rem; }
+    a { color: #58a6ff; }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <div th:if="${error}">
+    <h1 class="err">Acesso negado</h1>
+    <p th:text="${error}"></p>
+    <p class="meta"><a href="https://github.com/fidelisfelipe/skillforge/issues">Voltar para as issues</a></p>
+  </div>
+
+  <div th:if="${invited}">
+    <h1 class="ok">Convite enviado!</h1>
+    <p>Um convite foi enviado para <strong th:text="${email}"></strong>.</p>
+    <p>Acesse <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a> para aceitar.</p>
+    <p class="meta">Hero: <span th:text="${heroId}"></span> &nbsp;·&nbsp; @<span th:text="${login}"></span></p>
+  </div>
+
+  <div th:if="${invited != null and !invited}">
+    <h1 class="err">Falha no envio</h1>
+    <p>Identificamos seu e-mail (<strong th:text="${email}"></strong>) mas o convite CloudAMQP falhou.</p>
+    <p class="meta">Entre em contato com @fidelisfelipe para acesso manual.</p>
+  </div>
+
+</div>
+</body>
+</html>

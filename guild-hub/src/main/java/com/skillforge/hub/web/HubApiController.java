@@ -6,6 +6,8 @@ import com.skillforge.hub.domain.LeaderboardEntry;
 import com.skillforge.hub.domain.Quest;
 import com.skillforge.hub.domain.QuestRarity;
 import com.skillforge.hub.github.GitHubClient;
+import com.skillforge.hub.onboarding.HubUrlProvider;
+import com.skillforge.hub.onboarding.OnboardingTokenStore;
 import com.skillforge.hub.registration.ForkWatcher;
 import com.skillforge.hub.service.HeroPresenceService;
 import com.skillforge.hub.service.HeroRegistryService;
@@ -29,6 +31,8 @@ public class HubApiController {
     private final ProblemPublisher problemPublisher;
     private final HeroPresenceService presence;
     private final QuestRoutingService routing;
+    private final OnboardingTokenStore tokenStore;
+    private final HubUrlProvider hubUrlProvider;
 
     @Value("${guild.amqp.exchange}")
     private String amqpExchange;
@@ -42,7 +46,9 @@ public class HubApiController {
     public HubApiController(HeroRegistryService registry, QuestBoardService questBoard,
                             ForkWatcher forkWatcher, GitHubClient github,
                             ProblemPublisher problemPublisher, HeroPresenceService presence,
-                            QuestRoutingService routing) {
+                            QuestRoutingService routing,
+                            OnboardingTokenStore tokenStore,
+                            HubUrlProvider hubUrlProvider) {
         this.registry = registry;
         this.questBoard = questBoard;
         this.forkWatcher = forkWatcher;
@@ -50,6 +56,27 @@ public class HubApiController {
         this.problemPublisher = problemPublisher;
         this.presence = presence;
         this.routing = routing;
+        this.tokenStore = tokenStore;
+        this.hubUrlProvider = hubUrlProvider;
+    }
+
+    @PostMapping("/onboard/link")
+    public ResponseEntity<?> generateOnboardingLink(
+            @RequestParam String githubLogin,
+            @RequestParam String heroId,
+            @RequestParam int issueNumber,
+            @RequestParam(defaultValue = "false") boolean postToIssue) throws Exception {
+
+        String token = tokenStore.generate(heroId, githubLogin, issueNumber);
+        String link = "%s/onboard/amqp?token=%s".formatted(hubUrlProvider.get(), token);
+
+        if (postToIssue) {
+            github.postComment(issueNumber,
+                "🔐 **Acesso ao CloudAMQP** — clique no link abaixo, autentique com seu GitHub e o convite será enviado automaticamente:\n\n" +
+                "[Obter acesso AMQP](" + link + ") _(expira em 48h)_");
+        }
+
+        return ResponseEntity.ok(Map.of("link", link, "heroId", heroId, "githubLogin", githubLogin));
     }
 
     @GetMapping("/heroes")

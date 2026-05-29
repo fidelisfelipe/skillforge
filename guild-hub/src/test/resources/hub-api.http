@@ -204,6 +204,20 @@ Content-Type: application/json
 }
 
 ### ──────────────────────────────────────────────────────────────────────────
+# ONBOARDING AMQP
+### ──────────────────────────────────────────────────────────────────────────
+
+### Gerar link de onboarding para dev já registrado (não posta na issue)
+POST {{baseUrl}}/api/onboard/link?githubLogin=fidelisdev&heroId=log-guardian&issueNumber=3
+
+###
+
+### Gerar link E postar como comentário na issue do hero
+POST {{baseUrl}}/api/onboard/link?githubLogin=fidelisdev&heroId=log-guardian&issueNumber=3&postToIssue=true
+
+###
+
+### ──────────────────────────────────────────────────────────────────────────
 # FORKS
 ### ──────────────────────────────────────────────────────────────────────────
 

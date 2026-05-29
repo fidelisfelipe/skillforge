@@ -2,6 +2,8 @@ package com.skillforge.hub.registration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.skillforge.hub.github.GitHubClient;
+import com.skillforge.hub.onboarding.HubUrlProvider;
+import com.skillforge.hub.onboarding.OnboardingTokenStore;
 import com.skillforge.hub.service.HeroRegistryService;
 import com.skillforge.hub.web.HubDashboardController;
 import org.slf4j.Logger;
@@ -21,13 +23,19 @@ public class RegistrationWatcher {
     private final GitHubClient github;
     private final HeroRegistryService registry;
     private final HubDashboardController dashboard;
+    private final OnboardingTokenStore tokenStore;
+    private final HubUrlProvider hubUrlProvider;
 
     public RegistrationWatcher(GitHubClient github,
                                 HeroRegistryService registry,
-                                HubDashboardController dashboard) {
+                                HubDashboardController dashboard,
+                                OnboardingTokenStore tokenStore,
+                                HubUrlProvider hubUrlProvider) {
         this.github = github;
         this.registry = registry;
         this.dashboard = dashboard;
+        this.tokenStore = tokenStore;
+        this.hubUrlProvider = hubUrlProvider;
 
         if (!github.hasToken()) {
             log.warn("GITHUB_TOKEN não configurado — o watcher não conseguirá postar comentários nem aplicar labels.");
@@ -97,6 +105,12 @@ public class RegistrationWatcher {
 
         github.postComment(issueNumber, comment);
         github.addLabel(issueNumber, "registered");
+
+        String token = tokenStore.generate(heroId, opener, issueNumber);
+        String onboardingLink = "%s/onboard/amqp?token=%s".formatted(hubUrlProvider.get(), token);
+        github.postComment(issueNumber,
+            "🔐 **Acesso ao CloudAMQP** — clique no link abaixo, autentique com seu GitHub e o convite será enviado automaticamente:\n\n" +
+            "[Obter acesso AMQP](" + onboardingLink + ") _(expira em 48h)_");
 
         registry.refresh();
         dashboard.broadcast("HERO_JOINED",
