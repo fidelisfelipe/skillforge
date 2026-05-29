@@ -1,0 +1,126 @@
+name: Fork Hero Registration
+
+on:
+  fork:
+  schedule:
+    - cron: '*/15 * * * *'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  scan-and-register:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan forks and register new heroes
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const MANIFEST_PATHS = [
+              'hero-template/src/main/resources/manifest.json',
+              'src/main/resources/manifest.json',
+              'manifest.json'
+            ];
+            const PLACEHOLDER_IDS = new Set(['your-hero-id', 'hero-unknown', '']);
+
+            // Fetch all forks
+            const { data: forks } = await github.rest.repos.listForks({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+              sort: 'newest'
+            });
+
+            if (forks.length === 0) {
+              console.log('Nenhum fork encontrado.');
+              return;
+            }
+
+            // Fetch existing hero issues to detect duplicates
+            const { data: existingIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'hero',
+              state: 'all',
+              per_page: 100
+            });
+
+            const registeredOwners = new Set(
+              existingIssues
+                .filter(i => {
+                  const labels = i.labels.map(l => l.name);
+                  return labels.includes('registered') || (!labels.includes('invalid') && labels.includes('hero'));
+                })
+                .map(i => {
+                  try {
+                    const match = i.body?.match(/"githubLogin"\s*:\s*"([^"]+)"/);
+                    return match ? match[1].toLowerCase() : null;
+                  } catch { return null; }
+                })
+                .filter(Boolean)
+            );
+
+            console.log(`Forks encontrados: ${forks.length} | Já registrados: ${registeredOwners.size}`);
+
+            for (const fork of forks) {
+              const forkOwner = fork.owner.login;
+              const forkRepo  = fork.name;
+              const avatarUrl = fork.owner.avatar_url;
+              const forkUrl   = fork.html_url;
+
+              if (registeredOwners.has(forkOwner.toLowerCase())) {
+                console.log(`${forkOwner}: já registrado — ignorando.`);
+                continue;
+              }
+
+              // Try each manifest path
+              let manifest = null;
+              for (const path of MANIFEST_PATHS) {
+                try {
+                  const res = await github.rest.repos.getContent({
+                    owner: forkOwner,
+                    repo: forkRepo,
+                    path
+                  });
+                  const decoded = Buffer.from(res.data.content, 'base64').toString('utf-8');
+                  manifest = JSON.parse(decoded);
+                  break;
+                } catch {
+                  // tenta próximo path
+                }
+              }
+
+              if (!manifest) {
+                console.log(`${forkOwner}: sem manifest.json — ignorando.`);
+                continue;
+              }
+
+              const heroId = (manifest.heroId || '').trim();
+              if (PLACEHOLDER_IDS.has(heroId)) {
+                console.log(`${forkOwner}: heroId placeholder ('${heroId}') — ignorando.`);
+                continue;
+              }
+
+              // Cria issue de registro
+              const enriched = {
+                ...manifest,
+                githubLogin: forkOwner,
+                avatarUrl,
+                forkRepo: forkUrl
+              };
+
+              const title = `[Hero Registration] ${manifest.heroName || heroId} (@${forkOwner})`;
+              const body  = JSON.stringify(enriched, null, 2);
+
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['hero']
+              });
+
+              console.log(`Issue #${issue.number} criada para '${heroId}' — fork ${forkOwner}/${forkRepo}`);
+            }
