@@ -2,192 +2,282 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>SkillForge — Acesso AMQP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge — Onboarding AMQP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --page:          #f1f5f9;
+      --s1:            #ffffff;
+      --s2:            #f8fafc;
+      --s3:            #f1f5f9;
+      --border:        #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text:          #0f172a;
+      --text-2:        #475569;
+      --text-3:        #94a3b8;
+
+      --blue:          #2563eb;
+      --blue-soft:     #eff6ff;
+      --blue-mid:      #bfdbfe;
+      --green:         #059669;
+      --green-soft:    #ecfdf5;
+      --green-mid:     #a7f3d0;
+      --amber:         #d97706;
+      --amber-soft:    #fffbeb;
+      --amber-mid:     #fde68a;
+      --red:           #dc2626;
+      --red-soft:      #fef2f2;
+      --red-mid:       #fecaca;
+
+      --ui:   'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+      --shadow-xs: 0 1px 2px rgba(0,0,0,.05);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --r:    8px;
+      --r-sm: 5px;
+      --r-lg: 12px;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: monospace;
-      background: #0d1117;
-      color: #c9d1d9;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 2rem 1rem;
-    }
-
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 2rem;
-      width: 100%;
-      max-width: 620px;
-    }
-
-    h1 { font-size: 1.2rem; margin-bottom: 1rem; }
-    h2 { font-size: 0.9rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.5rem 0 0.75rem; }
-
-    .ok  { color: #3fb950; }
-    .err { color: #f85149; }
-    .warn { color: #d29922; }
-
-    .meta { color: #8b949e; font-size: 0.85rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #21262d; }
-    a { color: #58a6ff; text-decoration: none; }
+    body { background: var(--page); color: var(--text); font-family: var(--ui); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+    a { color: var(--blue); text-decoration: none; }
     a:hover { text-decoration: underline; }
+
+    .topbar {
+      background: var(--s1); border-bottom: 1px solid var(--border);
+      padding: 0 28px; height: 56px;
+      display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: var(--shadow-xs);
+    }
+    .brand { font-size: 17px; font-weight: 700; letter-spacing: -.02em; color: var(--text); }
+    .brand em { font-style: normal; color: var(--blue); }
+    .hub-pill {
+      background: var(--blue); color: #fff;
+      font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 99px;
+    }
+
+    .workspace { max-width: 640px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    .card { background: var(--s1); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .card-hd { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+    .card-label { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+    .card-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .card-sub   { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+    .card-body  { padding: 24px; }
+
+    .card.state-ok     { border-left: 4px solid var(--green); }
+    .card.state-warn   { border-left: 4px solid var(--amber); }
+    .card.state-err    { border-left: 4px solid var(--red); }
+
+    .card.state-ok   .card-hd { background: linear-gradient(to right, var(--green-soft), var(--s1) 60%); border-color: var(--green-mid); }
+    .card.state-warn .card-hd { background: linear-gradient(to right, var(--amber-soft), var(--s1) 60%); border-color: var(--amber-mid); }
+    .card.state-err  .card-hd { background: linear-gradient(to right, var(--red-soft),   var(--s1) 60%); border-color: var(--red-mid); }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 99px; border: 1px solid;
+    }
+    .badge-ok   { color: var(--green); background: var(--green-soft); border-color: var(--green-mid); }
+    .badge-warn { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-mid); }
+    .badge-err  { color: var(--red);   background: var(--red-soft);   border-color: var(--red-mid); }
+
+    .section-title {
+      font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-3); margin-bottom: 12px;
+    }
+
+    .steps { list-style: none; counter-reset: steps; display: flex; flex-direction: column; gap: 10px; }
+    .steps li {
+      counter-increment: steps;
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 13px; color: var(--text-2);
+    }
+    .step-num {
+      flex-shrink: 0; width: 22px; height: 22px;
+      background: var(--blue-soft); border: 1px solid var(--blue-mid);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--blue);
+    }
+    .step-num::before { content: counter(steps); }
+    .steps li strong { color: var(--text); }
+    .steps li code { font-family: var(--mono); font-size: 12px; background: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 1px 6px; color: var(--green); }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
     .env-block {
       position: relative;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      padding: 1rem 1rem 1rem 1rem;
-      font-size: 0.82rem;
-      line-height: 1.7;
-      overflow-x: auto;
-      white-space: pre;
+      background: var(--s2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px;
+      font-family: var(--mono); font-size: 12px; line-height: 1.8;
+      overflow-x: auto; white-space: pre;
     }
+    .env-block .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: var(--s1); border: 1px solid var(--border); border-radius: var(--r-sm);
+      color: var(--text-3); cursor: pointer; font-family: var(--ui);
+      font-size: 11px; font-weight: 500; padding: 3px 10px;
+      transition: all .15s;
+    }
+    .env-block .copy-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .env-block .copy-btn.copied { border-color: var(--green); color: var(--green); background: var(--green-soft); }
 
-    .copy-btn {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      background: #21262d;
-      border: 1px solid #30363d;
-      border-radius: 4px;
-      color: #8b949e;
-      cursor: pointer;
-      font-family: monospace;
-      font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
-    }
-    .copy-btn:hover { color: #c9d1d9; border-color: #58a6ff; }
-    .copy-btn.copied { color: #3fb950; border-color: #3fb950; }
+    .var-key     { color: var(--blue); font-weight: 500; }
+    .var-val     { color: var(--text); }
+    .var-comment { color: var(--text-3); }
 
-    .var-key   { color: #79c0ff; }
-    .var-val   { color: #a5d6ff; }
-    .comment   { color: #8b949e; }
+    .env-note {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: var(--blue-soft); border: 1px solid var(--blue-mid);
+      border-radius: var(--r-sm); padding: 10px 14px;
+      font-size: 12px; color: var(--text-2); margin-top: 10px; line-height: 1.5;
+    }
+    .env-note-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
 
-    .steps { list-style: none; counter-reset: steps; }
-    .steps li {
-      counter-increment: steps;
-      padding: 0.4rem 0 0.4rem 2rem;
-      position: relative;
-      color: #c9d1d9;
-      font-size: 0.9rem;
+    .meta-row {
+      padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      font-size: 12px; color: var(--text-3);
     }
-    .steps li::before {
-      content: counter(steps);
-      position: absolute;
-      left: 0;
-      background: #21262d;
-      border: 1px solid #30363d;
-      border-radius: 50%;
-      width: 1.3rem;
-      height: 1.3rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      color: #58a6ff;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #1f3d2e;
-      color: #3fb950;
-      border: 1px solid #2ea043;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      padding: 0.1rem 0.5rem;
-      margin-left: 0.4rem;
-      vertical-align: middle;
-    }
+    .meta-row code { font-family: var(--mono); font-size: 11px; background: var(--s2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 1px 6px; color: var(--text-2); }
+    .meta-sep { color: var(--border-strong); }
   </style>
 </head>
 <body>
-<div class="card">
+
+<header class="topbar">
+  <span class="brand">Skill<em>Forge</em></span>
+  <span class="hub-pill">Guild Hub</span>
+</header>
+
+<main class="workspace">
 
   <!-- ── ERRO ── -->
   <div th:if="${error}">
-    <h1 class="err">Acesso negado</h1>
-    <p th:text="${error}" style="margin-bottom:1rem;"></p>
-    <p class="meta"><a href="https://github.com/fidelisfelipe/skillforge/issues">← Voltar para as issues</a></p>
+    <div class="card state-err">
+      <div class="card-hd">
+        <div class="card-label">Onboarding AMQP</div>
+        <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+          Acesso negado
+          <span class="status-badge badge-err">erro</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--text-2);font-size:13px;" th:text="${error}"></p>
+        <div class="meta-row">
+          <a href="https://github.com/fidelisfelipe/skillforge/issues">← Abrir issue na guilda</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ── SUCESSO ── -->
   <div th:if="${invited}">
-    <h1 class="ok">Bem-vindo à guilda, @<span th:text="${login}"></span>! <span class="badge">hero registrado</span></h1>
-    <p style="margin-bottom:0.5rem;">
-      Convite CloudAMQP enviado para <strong th:text="${email}"></strong>.
-      Acesse <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a> e aceite o convite antes de subir o hero.
-    </p>
+    <div class="card state-ok">
+      <div class="card-hd">
+        <div class="card-label">Onboarding AMQP</div>
+        <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+          Bem-vindo à guilda, @<span th:text="${login}"></span>
+          <span class="status-badge badge-ok">hero registrado</span>
+        </div>
+        <div class="card-sub">
+          Convite CloudAMQP enviado para <strong th:text="${email}"></strong>.
+          Aceite em <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a> antes de subir o hero.
+        </div>
+      </div>
+      <div class="card-body">
 
-    <h2>Próximos passos</h2>
-    <ol class="steps">
-      <li>Aceite o convite no <a href="https://customer.cloudamqp.com" target="_blank">CloudAMQP</a> usando o e-mail <strong th:text="${email}"></strong></li>
-      <li>Crie o arquivo <code>.env</code> na raiz do seu fork com as variáveis abaixo</li>
-      <li>Suba o hero: <code>cd hero-template &amp;&amp; mvn spring-boot:run</code></li>
-      <li>Confirme que o hero aparece online no dashboard da guilda</li>
-    </ol>
+        <div class="section-title">Próximos passos</div>
+        <ol class="steps">
+          <li>
+            <span class="step-num"></span>
+            <span>Aceite o convite no <a href="https://customer.cloudamqp.com" target="_blank">CloudAMQP</a> usando o e-mail <strong th:text="${email}"></strong></span>
+          </li>
+          <li>
+            <span class="step-num"></span>
+            <span>Crie o arquivo <code>.env</code> na raiz do seu fork com as variáveis abaixo</span>
+          </li>
+          <li>
+            <span class="step-num"></span>
+            <span>Suba o hero: <code>cd hero-template &amp;&amp; mvn spring-boot:run</code></span>
+          </li>
+          <li>
+            <span class="step-num"></span>
+            <span>Confirme que o hero aparece <strong>online</strong> no dashboard da guilda</span>
+          </li>
+        </ol>
 
-    <h2>Configuração mínima — <code>.env</code></h2>
+        <hr class="divider">
 
-    <div class="env-block" id="envBlock"><button class="copy-btn" onclick="copyEnv()" id="copyBtn">copiar</button><span class="comment"># Mensageria — obtida via CloudAMQP após aceitar o convite</span>
-<span class="var-key">AMQP_URL</span>=<span class="var-val" th:text="${amqpUrl}"></span>
-<span class="var-key">AMQP_SSL_ENABLED</span>=<span class="var-val">false</span>
-<span class="var-key">AMQP_EXCHANGE</span>=<span class="var-val" th:text="${amqpExchange}"></span>
+        <div class="section-title">Configuração mínima — <span style="font-family:var(--mono);font-size:10px;font-weight:400;">.env</span></div>
+        <div class="env-block" id="envBlock"><button class="copy-btn" onclick="copyEnv()" id="copyBtn">Copiar</button><span class="var-key">AMQP_URL</span>=<span class="var-val" th:text="${amqpUrl}"></span>
+<span class="var-key">AMQP_SSL_ENABLED</span>=<span class="var-val">false</span></div>
+        <div class="env-note">
+          <span class="env-note-icon">ℹ</span>
+          <span>Confirme o <code style="font-family:var(--mono);font-size:11px;background:var(--blue-soft);border:1px solid var(--blue-mid);border-radius:3px;padding:1px 5px;color:var(--blue);">AMQP_URL</code> no painel da instância <strong>skillforge</strong> em <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a> após aceitar o convite.</span>
+        </div>
 
-<span class="comment"># Identidade do hero — deve bater com manifest.json</span>
-<span class="var-key">HERO_ID</span>=<span class="var-val" th:text="${heroId}"></span></div>
-
-    <p style="font-size:0.8rem; color:#8b949e; margin-top:0.5rem;">
-      Confirme o <code>AMQP_URL</code> no painel da instância <strong>skillforge</strong> em
-      <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a>
-      após aceitar o convite.
-    </p>
-
-    <div class="meta">
-      Hero: <code th:text="${heroId}"></code> &nbsp;·&nbsp; @<span th:text="${login}"></span>
-      &nbsp;·&nbsp; <a href="https://github.com/fidelisfelipe/skillforge/issues">issues da guilda</a>
+        <div class="meta-row">
+          <span>Hero: <code th:text="${heroId}"></code></span>
+          <span class="meta-sep">·</span>
+          <span>@<span th:text="${login}"></span></span>
+          <span class="meta-sep">·</span>
+          <a href="https://github.com/fidelisfelipe/skillforge/issues">Issues da guilda</a>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- ── FALHA NO INVITE ── -->
   <div th:if="${invited != null and !invited}">
-    <h1 class="warn">Quase lá, @<span th:text="${login}"></span></h1>
-    <p style="margin-bottom:1rem;">
-      Identificamos seu e-mail (<strong th:text="${email}"></strong>) mas o convite CloudAMQP não foi enviado automaticamente.
-      Entre em contato com <a href="https://github.com/fidelisfelipe" target="_blank">@fidelisfelipe</a> para acesso manual.
-    </p>
+    <div class="card state-warn">
+      <div class="card-hd">
+        <div class="card-label">Onboarding AMQP</div>
+        <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+          Quase lá, @<span th:text="${login}"></span>
+          <span class="status-badge badge-warn">ação necessária</span>
+        </div>
+        <div class="card-sub">
+          E-mail identificado (<strong th:text="${email}"></strong>), mas o convite CloudAMQP não foi enviado automaticamente.
+          Entre em contato com <a href="https://github.com/fidelisfelipe" target="_blank">@fidelisfelipe</a> para acesso manual.
+        </div>
+      </div>
+      <div class="card-body">
 
-    <h2>Configuração mínima — <code>.env</code></h2>
-    <div class="env-block" id="envBlock"><button class="copy-btn" onclick="copyEnv()" id="copyBtn">copiar</button><span class="comment"># Mensageria — solicite o AMQP_URL a @fidelisfelipe</span>
-<span class="var-key">AMQP_URL</span>=<span class="var-val">&lt;aguardando acesso&gt;</span>
-<span class="var-key">AMQP_SSL_ENABLED</span>=<span class="var-val">false</span>
-<span class="var-key">AMQP_EXCHANGE</span>=<span class="var-val" th:text="${amqpExchange}"></span>
+        <div class="section-title">Configuração mínima — <span style="font-family:var(--mono);font-size:10px;font-weight:400;">.env</span></div>
+        <div class="env-block" id="envBlock"><button class="copy-btn" onclick="copyEnv()" id="copyBtn">Copiar</button><span class="var-comment"># Solicite o AMQP_URL a @fidelisfelipe</span>
+<span class="var-key">AMQP_URL</span>=<span class="var-val" style="color:var(--text-3);">&lt;aguardando acesso&gt;</span>
+<span class="var-key">AMQP_SSL_ENABLED</span>=<span class="var-val">false</span></div>
 
-<span class="comment"># Identidade do hero</span>
-<span class="var-key">HERO_ID</span>=<span class="var-val" th:text="${heroId}"></span></div>
-
-    <div class="meta">@<span th:text="${login}"></span> &nbsp;·&nbsp; <a href="https://github.com/fidelisfelipe/skillforge/issues">issues da guilda</a></div>
+        <div class="meta-row">
+          <span>@<span th:text="${login}"></span></span>
+          <span class="meta-sep">·</span>
+          <a href="https://github.com/fidelisfelipe/skillforge/issues">Issues da guilda</a>
+        </div>
+      </div>
+    </div>
   </div>
 
-</div>
+</main>
 
 <script>
   function copyEnv() {
     const block = document.getElementById('envBlock');
-    const lines = [...block.childNodes]
-      .filter(n => n.nodeType === Node.TEXT_NODE || n.nodeName !== 'BUTTON')
+    const text = [...block.childNodes]
+      .filter(n => n.nodeName !== 'BUTTON')
       .map(n => n.textContent)
       .join('');
-    navigator.clipboard.writeText(lines.trim()).then(() => {
+    navigator.clipboard.writeText(text.trim()).then(() => {
       const btn = document.getElementById('copyBtn');
-      btn.textContent = 'copiado!';
+      btn.textContent = 'Copiado!';
       btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('copied'); }, 2000);
+      setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
     });
   }
 </script>

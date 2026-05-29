@@ -44,6 +44,8 @@ logging:
   level:
     com.skillforge: INFO
     org.apache.catalina.connector: WARN  # suprime Broken pipe / ClientAbortException de SSE
+    org.apache.catalina.core: WARN       # suprime dispatcherServlet IOException em SSE fechado
+    org.apache.coyote: WARN              # suprime flush error em conexão SSE encerrada pelo cliente
     rabbitmq: DEBUG
   pattern:
     console: "%d{HH:mm:ss} %highlight(%-5level) %cyan(%-30logger{30}) %msg%n"
