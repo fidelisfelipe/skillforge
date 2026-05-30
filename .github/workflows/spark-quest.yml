@@ -1,0 +1,121 @@
+name: Spark Quest
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  create-micro-quest:
+    if: github.event.label.name == 'spark'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Format issue as micro-quest
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title.replace(/^\[SPARK\]\s*/i, '').trim();
+            const body  = issue.body || '';
+            const login = issue.user.login;
+
+            // Estima XP pelo tamanho da descrição (heurística simples)
+            const wordCount = body.split(/\s+/).filter(Boolean).length;
+            const xp = wordCount < 30 ? 100 : wordCount < 80 ? 150 : 200;
+
+            const questId = `SPARK-${String(issue.number).padStart(3, '0')}`;
+
+            const microQuestComment = `
+            ## ⚡ Micro-Quest criada: \`${questId}\`
+
+            > Proposta por @${login} via label \`spark\`. Aberta para qualquer hero.
+
+            ---
+
+            ### ${questId} — ${title} \`COMMON\` \`+${xp} XP\`
+
+            **Status:** \`[ ]\` aberta
+            **Proposta por:** @${login}
+            **XP:** ${xp}
+
+            **Descrição**
+            ${body.trim() || '_Sem descrição. Edite esta issue para adicionar contexto._'}
+
+            **Para pegar esta micro-quest**
+            Comente \`/claim\` nesta issue.
+
+            **Para submeter sua solução**
+            Abra um PR referenciando esta issue com \`closes #${issue.number}\`.
+
+            ---
+
+            > Micro-quests não exigem domain profile nem fixtures — basta implementar e abrir o PR.
+            > Veja o schema completo em [\`quests/MICRO_QUEST.md\`](quests/MICRO_QUEST.md).
+            `.replace(/^            /gm, '');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issue.number,
+              body: microQuestComment
+            });
+
+            // Adiciona labels: micro-quest + open (remove spark para não reprocessar)
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issue.number,
+              labels: ['micro-quest', 'open']
+            });
+
+            console.log(`Micro-quest ${questId} criada para issue #${issue.number}`);
+
+  handle-claim:
+    if: >
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/claim') &&
+      contains(join(github.event.issue.labels.*.name, ','), 'micro-quest')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign hero to micro-quest
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const login       = context.payload.comment.user.login;
+            const issueNumber = context.payload.issue.number;
+
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issueNumber,
+              assignees: [login]
+            });
+
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issueNumber,
+              name: 'open'
+            }).catch(() => {});
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['in-progress']
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: issueNumber,
+              body: `⚔️ @${login} aceitou esta micro-quest. Boa sorte, herói!\n\nAbra um PR com \`closes #${issueNumber}\` quando terminar.`
+            });
+
+            console.log(`@${login} atribuído à issue #${issueNumber}`);

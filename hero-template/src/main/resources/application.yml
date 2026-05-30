@@ -12,6 +12,7 @@ spring:
 skillforge:
   hero:
     id: hero-template  # rename when copying — must match heroId in manifest.json
+  dev-mode: ${DEV_MODE:false}  # true = skip AMQP connection for local dev without broker
 
 guild:
   github:

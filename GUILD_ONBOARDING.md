@@ -130,6 +130,57 @@ Enquanto estiver conectado ao hub, você receberá via SSE:
 
 ---
 
+## Contribuir com o projeto (antes de ter um hero ativo)
+
+Você não precisa de um hero configurado para contribuir.
+
+### Propor uma feature — Spark Quest
+
+Abra uma issue com o label `spark`. O sistema converte automaticamente em uma **micro-quest** com XP.
+
+```
+Issue título:  Adicionar endpoint de health check com versão do manifest
+Issue body:    Descrição do que deve acontecer
+
+→ Workflow cria: SPARK-042 — Adicionar endpoint... COMMON +150 XP
+→ Qualquer hero comenta /claim para pegar
+```
+
+Features simples valem 100–200 XP. Sem domain profile, sem fixtures — só implementar e abrir PR.
+
+→ Schema completo em [`quests/MICRO_QUEST.md`](quests/MICRO_QUEST.md)
+
+---
+
+### Criar um hero novo — Hero Wizard
+
+Em vez de copiar o `hero-template` manualmente, use o wizard:
+
+```bash
+./scripts/new-hero.sh --id meu-hero --skills "java,spring-boot" --port 8083
+```
+
+O que ele faz:
+- Copia a estrutura do `hero-template`
+- Renomeia módulo, application name, porta
+- Gera `manifest.json` com suas skills
+- Adiciona o módulo ao `pom.xml` raiz
+
+Trabalhe localmente com `DEV_MODE=true` para não precisar do broker AMQP:
+
+```bash
+cd meu-hero && DEV_MODE=true mvn spring-boot:run
+```
+
+Quando pronto, renomeie a branch e faça push:
+
+```bash
+git branch -m local/meu-hero feature/meu-hero
+git push origin feature/meu-hero
+```
+
+---
+
 ## Seu próximo passo
 
 Quando o registro for confirmado, você tem dois caminhos:
