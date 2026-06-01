@@ -22,39 +22,6 @@ public class GuildController {
         this.guild = guild;
     }
 
-    @GetMapping("/")
-    public String dashboard(Model model) {
-        populateModel(model);
-        return "dashboard";
-    }
-
-    @GetMapping("/v2")
-    public String dashboardV2(Model model) {
-        populateModel(model);
-        return "dashboard-v2";
-    }
-
-    private void populateModel(Model model) {
-        var manifest = guild.getManifest();
-        var level = guild.getHeroLevel();
-
-        model.addAttribute("hero", manifest);
-        model.addAttribute("heroLevel", level);
-        model.addAttribute("isApprentice", level == HeroLevel.APPRENTICE);
-        model.addAttribute("isJourneymanPlus", level.level >= HeroLevel.JOURNEYMAN.level);
-        model.addAttribute("isExpertPlus", level.level >= HeroLevel.EXPERT.level);
-        model.addAttribute("isMasterPlus", level.level >= HeroLevel.MASTER.level);
-
-        model.addAttribute("validatedSkills", guild.getValidatedSkills());
-        model.addAttribute("heroXp", guild.getOwnXp());
-        model.addAttribute("members", guild.getMembers());
-        model.addAttribute("memberCount", guild.getMembers().size());
-        model.addAttribute("openQuests", guild.getOpenQuestCount());
-        model.addAttribute("completedQuests", guild.getCompletedQuestCount());
-        model.addAttribute("guildDataAvailable", guild.isGuildDataAvailable());
-        model.addAttribute("lastFetchMs", guild.getLastFetchMs());
-    }
-
     @GetMapping("/quests")
     public String quests(Model model) {
         var level = guild.getHeroLevel();

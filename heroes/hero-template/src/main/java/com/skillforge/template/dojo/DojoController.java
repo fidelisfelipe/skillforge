@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,10 +30,7 @@ public class DojoController {
     // SSE Emitters por heroId
     private static final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    /**
-     * Serve a página HTML do Dojo
-     */
-    @GetMapping("/dojo")
+    @GetMapping("/")
     public String dojo(Model model) {
         String heroId = heroProperties.getId();
         log.info("🥋 Serving Dojo interface for hero: {}", heroId);
