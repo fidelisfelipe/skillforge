@@ -1,6 +1,5 @@
 package com.skillforge.hub.dojo;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -32,14 +31,12 @@ public class KataProgressService {
     // chronological feed of all solutions
     private final List<KataSolution> recentFeed = new CopyOnWriteArrayList<>();
 
-    // KATA-001A foi resolvido pelo fidelisdev — semeado porque o store é in-memory
-    @PostConstruct
-    void seedKnownSolutions() {
-        record("KATA-001A", "fidelisdev", 100, 80);
+    public void record(String kataId, String heroId, int score, int xpEarned) {
+        recordAt(kataId, heroId, score, xpEarned, System.currentTimeMillis());
     }
 
-    public void record(String kataId, String heroId, int score, int xpEarned) {
-        KataSolution sol = new KataSolution(heroId, kataId, score, xpEarned, System.currentTimeMillis());
+    void recordAt(String kataId, String heroId, int score, int xpEarned, long timestamp) {
+        KataSolution sol = new KataSolution(heroId, kataId, score, xpEarned, timestamp);
         byKata.computeIfAbsent(kataId, k -> new CopyOnWriteArrayList<>()).add(sol);
         recentFeed.add(0, sol);
         if (recentFeed.size() > 50) recentFeed.removeLast();
