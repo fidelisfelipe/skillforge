@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  # RabbitMQ: Message Broker para comunicação Hero ↔ Hub
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: skillforge-rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI (http://localhost:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: skillforge
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-skillforge-dev}
+      RABBITMQ_DEFAULT_VHOST: /skillforge
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./infrastructure/rabbitmq/init.sh:/docker-entrypoint-initdb.d/init.sh
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - skillforge-network
+
+  # SQLite: Local database (heroes)
+  # (não precisa de container, é arquivo local)
+
+  # Hub: Guild Hub orquestrador
+  hub:
+    build:
+      context: ./hub
+      dockerfile: Dockerfile
+    container_name: skillforge-hub
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: skillforge
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-skillforge-dev}
+      SPRING_RABBITMQ_VIRTUALHOST: /skillforge
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_OWNER: ${GITHUB_OWNER}
+      GITHUB_REPO: ${GITHUB_REPO}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - skillforge-network
+
+networks:
+  skillforge-network:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+    driver: local

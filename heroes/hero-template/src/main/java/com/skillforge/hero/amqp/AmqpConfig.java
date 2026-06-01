@@ -13,10 +13,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AmqpConfig {
 
-    // Rename to match your hero: "{hero-id}.problems"
-    static final String QUEUE = "hero-template.problems";
-    // Adjust routing key to match the skills your hero resolves
-    static final String KEY   = "problem.#";
+    static final String QUEUE                        = "hero-template.problems";
+    static final String KEY                          = "problem.#";
+    static final String KATA_RESPONSES_QUEUE         = "kata.responses";
+    static final String KATA_VALIDATION_RESULTS_QUEUE = "kata.validation.results";
 
     @Value("${guild.amqp.exchange:skillforge}")
     private String exchangeName;
@@ -37,6 +37,16 @@ public class AmqpConfig {
     @Bean
     Binding problemBinding(TopicExchange skillforgeExchange) {
         return BindingBuilder.bind(problemQueue()).to(skillforgeExchange).with(KEY);
+    }
+
+    @Bean
+    Queue kataResponsesQueue() {
+        return QueueBuilder.durable(KATA_RESPONSES_QUEUE).build();
+    }
+
+    @Bean
+    Queue kataValidationResultsQueue() {
+        return QueueBuilder.durable(KATA_VALIDATION_RESULTS_QUEUE).build();
     }
 
     @Bean

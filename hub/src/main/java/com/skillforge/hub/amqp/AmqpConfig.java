@@ -12,10 +12,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AmqpConfig {
 
-    public static final String SOLUTIONS_QUEUE           = "skillforge.solutions";
-    public static final String HEARTBEATS_QUEUE          = "skillforge.heartbeats";
-    public static final String REVIEW_RESULTS_QUEUE      = "skillforge.review-results";
-    public static final String HERO_REGISTRATION_QUEUE   = "skillforge.hero-registration";
+    public static final String SOLUTIONS_QUEUE             = "skillforge.solutions";
+    public static final String HEARTBEATS_QUEUE            = "skillforge.heartbeats";
+    public static final String REVIEW_RESULTS_QUEUE        = "skillforge.review-results";
+    public static final String HERO_REGISTRATION_QUEUE     = "skillforge.hero-registration";
+    public static final String KATA_REQUESTS_QUEUE         = "kata.requests";
+    public static final String KATA_RESPONSES_QUEUE        = "kata.responses";
+    public static final String KATA_VALIDATION_RESULTS_QUEUE = "kata.validation.results";
 
     @Value("${guild.amqp.exchange}")
     private String exchangeName;
@@ -78,6 +81,21 @@ public class AmqpConfig {
     @Bean
     public Binding heroRegistrationBinding(Queue heroRegistrationQueue, TopicExchange skillforgeExchange) {
         return BindingBuilder.bind(heroRegistrationQueue).to(skillforgeExchange).with("hero.register");
+    }
+
+    @Bean
+    public Queue kataRequestsQueue() {
+        return new Queue(KATA_REQUESTS_QUEUE, true);
+    }
+
+    @Bean
+    public Queue kataResponsesQueue() {
+        return new Queue(KATA_RESPONSES_QUEUE, true);
+    }
+
+    @Bean
+    public Queue kataValidationResultsQueue() {
+        return new Queue(KATA_VALIDATION_RESULTS_QUEUE, true);
     }
 
     @Bean

@@ -16,6 +16,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.skillforge</groupId>
+            <artifactId>skillforge-shared</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
@@ -40,6 +45,11 @@
             <groupId>com.github.alexdlaird</groupId>
             <artifactId>java-ngrok</artifactId>
             <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 

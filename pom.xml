@@ -13,6 +13,7 @@
     <description>Guild Capability Platform</description>
 
     <modules>
+        <module>shared</module>
         <module>hub</module>
         <module>heroes/hero-template</module>
         <module>tools/guild-quest</module>
