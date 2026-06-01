@@ -52,6 +52,22 @@ public class KataService {
         return new ArrayList<>(themes.values());
     }
 
+    public KataDelivery getKata(String kataId) {
+        return katas.get(kataId);
+    }
+
+    public List<KataDelivery> getAllKatas() {
+        return new ArrayList<>(katas.values());
+    }
+
+    public List<KataCatalogLoader.ThemeEntry> getThemeEntries() {
+        return catalogLoader.getThemes();
+    }
+
+    public int getKataCount() {
+        return katas.size();
+    }
+
     public boolean themeExists(String themeId) {
         return themeId != null && themes.containsKey(themeId);
     }

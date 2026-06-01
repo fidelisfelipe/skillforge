@@ -1,5 +1,7 @@
 package com.skillforge.hub.web;
 
+import com.skillforge.hub.dojo.KataProgressService;
+import com.skillforge.hub.dojo.KataService;
 import com.skillforge.hub.service.HeroPresenceService;
 import com.skillforge.hub.service.HeroRegistryService;
 import com.skillforge.hub.service.QuestBoardService;
@@ -21,15 +23,20 @@ public class HubDashboardController {
 
     private final HeroRegistryService registry;
     private final QuestBoardService questBoard;
+    private final KataService kataService;
+    private final KataProgressService kataProgress;
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     // @Lazy quebra a dependência circular: HeroPresenceService → HubDashboardController
     @Autowired @Lazy
     private HeroPresenceService presence;
 
-    public HubDashboardController(HeroRegistryService registry, QuestBoardService questBoard) {
+    public HubDashboardController(HeroRegistryService registry, QuestBoardService questBoard,
+                                  KataService kataService, KataProgressService kataProgress) {
         this.registry = registry;
         this.questBoard = questBoard;
+        this.kataService = kataService;
+        this.kataProgress = kataProgress;
     }
 
     @GetMapping("/")
@@ -54,6 +61,10 @@ public class HubDashboardController {
         model.addAttribute("questsByRarity",  questBoard.getCountByRarity());
         model.addAttribute("lastFetchMs",     registry.getLastFetchMs());
         model.addAttribute("onlineHeroes",    presence != null ? presence.getOnlineHeroes() : Set.of());
+        model.addAttribute("kataThemes",      kataService.getThemeEntries());
+        model.addAttribute("kataSolutions",   kataProgress);
+        model.addAttribute("kataCount",       kataService.getKataCount());
+        model.addAttribute("kataSolvedCount", kataProgress.getSolvedKataCount());
     }
 
     @GetMapping(value = "/events", produces = "text/event-stream")

@@ -24,6 +24,8 @@ public class KataValidator {
 
     private final RabbitTemplate rabbitTemplate;
     private final GitHubService githubService;
+    private final KataService kataService;
+    private final KataProgressService kataProgress;
 
     private static final Map<String, String> KATA_SKILLS = Map.ofEntries(
         Map.entry("KATA-001A", "java-21-virtual-threads"),
@@ -69,9 +71,12 @@ public class KataValidator {
 
             boolean passed  = mvnExit == 0;
             int score       = passed ? 100 : parseScore(output.toString());
-            int xpEarned    = passed ? KATA_XP.getOrDefault(kataId, 80) : 0;
+            var kata        = kataService.getKata(kataId);
+            int xpEarned    = passed ? (kata != null ? kata.xpReward() : KATA_XP.getOrDefault(kataId, 80)) : 0;
             String skill    = passed ? KATA_SKILLS.get(kataId) : null;
             String feedback = extractFeedback(output.toString(), passed);
+
+            if (passed) kataProgress.record(kataId, heroId, score, xpEarned);
 
             // 3. Publish AMQP result
             KataValidationResultMessage result = new KataValidationResultMessage(
