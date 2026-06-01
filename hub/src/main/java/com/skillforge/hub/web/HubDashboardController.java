@@ -42,12 +42,6 @@ public class HubDashboardController {
     @GetMapping("/")
     public String dashboard(Model model) {
         populateModel(model);
-        return "hub";
-    }
-
-    @GetMapping("/v2")
-    public String dashboardV2(Model model) {
-        populateModel(model);
         return "dashboard-v2";
     }
 
