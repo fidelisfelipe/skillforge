@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 public class KataValidator {
 
     private final RabbitTemplate rabbitTemplate;
+    private final GitHubService githubService;
 
     private static final Map<String, String> KATA_SKILLS = Map.ofEntries(
         Map.entry("KATA-001A", "java-21-virtual-threads"),
@@ -43,7 +44,8 @@ public class KataValidator {
     );
 
     @Async
-    public void validateAsync(String heroId, String kataId, String cloneUrl, String branch) {
+    public void validateAsync(String heroId, String kataId, String cloneUrl, String branch,
+                              int prNumber, String repoFullName) {
         log.info("🔍 Starting validation | kata={} hero={} branch={}", kataId, heroId, branch);
         Path tempDir = null;
 
@@ -55,7 +57,9 @@ public class KataValidator {
                 "git", "clone", "-b", branch, "--depth", "1", cloneUrl, tempDir.toString());
 
             if (cloneExit != 0) {
-                publishFailure(heroId, kataId, 0, "git clone failed — verify branch exists: " + branch);
+                String msg = "git clone failed — verify branch exists: " + branch;
+                publishFailure(heroId, kataId, 0, msg);
+                githubService.commentOnPR(repoFullName, prNumber, "❌ **Validation failed**\n\n" + msg);
                 return;
             }
 
@@ -63,16 +67,22 @@ public class KataValidator {
             StringBuilder output = new StringBuilder();
             int mvnExit = runProcessWithOutput(tempDir, output, mvnExecutable(), "verify", "-B");
 
-            boolean passed = mvnExit == 0;
-            int score      = passed ? 100 : parseScore(output.toString());
-            int xpEarned   = passed ? KATA_XP.getOrDefault(kataId, 80) : 0;
-            String skill   = passed ? KATA_SKILLS.get(kataId) : null;
+            boolean passed  = mvnExit == 0;
+            int score       = passed ? 100 : parseScore(output.toString());
+            int xpEarned    = passed ? KATA_XP.getOrDefault(kataId, 80) : 0;
+            String skill    = passed ? KATA_SKILLS.get(kataId) : null;
             String feedback = extractFeedback(output.toString(), passed);
 
+            // 3. Publish AMQP result
             KataValidationResultMessage result = new KataValidationResultMessage(
                 heroId, kataId, passed, score, xpEarned, skill, feedback, System.currentTimeMillis()
             );
             rabbitTemplate.convertAndSend("kata.validation.results", result);
+
+            // 4. Comment and close PR on GitHub
+            String comment = buildPrComment(heroId, kataId, passed, score, xpEarned, skill, feedback);
+            githubService.commentOnPR(repoFullName, prNumber, comment);
+            githubService.closePR(repoFullName, prNumber);
 
             log.info("📤 Validation result | kata={} passed={} score={}/100 xp={}",
                 kataId, passed, score, xpEarned);
@@ -80,8 +90,43 @@ public class KataValidator {
         } catch (Exception e) {
             log.error("❌ Validation error | kata={} hero={}", kataId, heroId, e);
             publishFailure(heroId, kataId, 0, "Validation error: " + e.getMessage());
+            githubService.commentOnPR(repoFullName, prNumber,
+                "❌ **Internal validation error**\n\n" + e.getMessage());
         } finally {
             cleanup(tempDir);
+        }
+    }
+
+    private String buildPrComment(String heroId, String kataId, boolean passed,
+                                  int score, int xpEarned, String skill, String feedback) {
+        if (passed) {
+            return String.format("""
+                ✅ **%s validated!**
+
+                | | |
+                |---|---|
+                | **Hero** | `%s` |
+                | **Score** | %d/100 |
+                | **XP earned** | %d |
+                | **Skill unlocked** | `%s` |
+
+                🎉 Kata completed!
+                """, kataId, heroId, score, xpEarned, skill);
+        } else {
+            return String.format("""
+                ❌ **%s validation failed**
+
+                | | |
+                |---|---|
+                | **Hero** | `%s` |
+                | **Score** | %d/100 |
+
+                **Feedback:**
+                ```
+                %s
+                ```
+                Fix the failing tests and push again.
+                """, kataId, heroId, score, feedback);
         }
     }
 
@@ -94,6 +139,7 @@ public class KataValidator {
             log.error("❌ Failed to publish failure result", e);
         }
     }
+
 
     // Parse "Tests run: 4, Failures: 2, Errors: 1" → proportional score
     private int parseScore(String output) {

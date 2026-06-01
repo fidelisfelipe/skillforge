@@ -45,8 +45,10 @@ public class KataWebhookController {
             String branchRef  = pr.path("head").path("ref").asText();
             String cloneUrl   = pr.path("head").path("repo").path("clone_url").asText();
 
-            String heroId = extractField(body, "heroId");
-            String kataId = extractKataId(branchRef);
+            String heroId       = extractField(body, "heroId");
+            String kataId       = extractKataId(branchRef);
+            int prNumber        = pr.path("number").asInt();
+            String repoFullName = root.path("repository").path("full_name").asText();
 
             if (heroId == null || kataId == null) {
                 log.warn("⚠️ Webhook rejected — branch={} heroId={} kataId={}", branchRef, heroId, kataId);
@@ -54,8 +56,8 @@ public class KataWebhookController {
                     .body("PR body must contain 'heroId: <id>' and branch must match 'kata-NNNx-*'");
             }
 
-            log.info("🔔 Kata submission received | kata={} hero={} branch={}", kataId, heroId, branchRef);
-            kataValidator.validateAsync(heroId, kataId, cloneUrl, branchRef);
+            log.info("🔔 Kata submission received | kata={} hero={} PR=#{} repo={}", kataId, heroId, prNumber, repoFullName);
+            kataValidator.validateAsync(heroId, kataId, cloneUrl, branchRef, prNumber, repoFullName);
 
             return ResponseEntity.ok("accepted");
 
