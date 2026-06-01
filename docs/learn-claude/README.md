@@ -122,7 +122,7 @@ Não existe modelo certo para tudo. Existe modelo certo para cada tarefa.
 Custo × Qualidade × Latência × Privacidade
 ```
 
-Esses quatro fatores determinam a escolha. No SkillForge, a hierarquia está em `CLAUDE.md`:
+Esses quatro fatores determinam a escolha. No SkillForge, a hierarquia está em `PRINCIPLES.md`:
 
 ```
 1. SLM local (Ollama)          — custo zero, privacidade total, qualidade variável
@@ -237,7 +237,7 @@ Se não tiver, continua fazendo perguntas.
 
 ### Conceito
 
-Leia `agents/AGENT_GUIDE.md` completo antes deste módulo.
+Leia `specs/AGENT_GUIDE.md` completo antes deste módulo.
 
 Um hero é um processo que:
 1. Escuta via AMQP (tópico `skillforge`, routing key `problem`)

@@ -145,7 +145,7 @@ Inclua ao menos 3 destas nos materiais, com evidência ou argumento:
 
 ## Como pegar esta quest
 
-1. Leia `README.md`, `GUILD_ONBOARDING.md` e `CLAUDE.md` para entender o projeto
+1. Leia `README.md`, `GUILD_ONBOARDING.md` e `PRINCIPLES.md` para entender o projeto
 2. Responda para si mesmo os 3 fixtures antes de escrever qualquer linha
 3. Escreva `FOR_DEVS.md` primeiro — é o mais difícil (dev é cético, quer provas)
 4. Derive `FOR_COMPANIES.md` a partir do mesmo núcleo de valor

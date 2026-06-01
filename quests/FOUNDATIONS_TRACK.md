@@ -159,7 +159,7 @@ Domínio:
 Usar Claude API para tudo é como chamar um especialista para trocar uma lâmpada.
 Funciona — mas custa caro e demora mais do que precisa.
 
-A hierarquia do projeto (ver `CLAUDE.md`):
+A hierarquia do projeto (ver `PRINCIPLES.md`):
 SLM local → SLM especializado → Claude API → Híbrido.
 
 **O que fazer**
@@ -313,7 +313,7 @@ Técnico:
 - [ ] Fallback testado com Ollama desligado
 
 Domínio:
-- [ ] Checklist do `agents/AGENT_GUIDE.md` completo
+- [ ] Checklist do `specs/AGENT_GUIDE.md` completo
 - [ ] Dev consegue explicar o que muda no confidence quando o fallback entra
 
 ---

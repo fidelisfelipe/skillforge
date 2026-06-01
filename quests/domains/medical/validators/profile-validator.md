@@ -1,7 +1,7 @@
 # Profile Validator — Domínio Medical
 
 > Implementação do validator-contract.md para o domínio médico.
-> Contrato genérico em: `agents/heroes/quest-scribe/validator-contract.md`
+> Contrato genérico em: `specs/heroes/quest-scribe/validator-contract.md`
 
 ## Modelo
 

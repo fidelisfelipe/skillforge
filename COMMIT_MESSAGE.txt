@@ -1,0 +1,42 @@
+refactor: Reorganize documentation and consolidate architecture (Phases 1-4)
+
+Phase 1: Create structured documentation organization
+- Move onboarding guides to /docs/onboarding/
+- Move progression materials to /docs/progression/
+- Move reference materials to /docs/reference/
+- Create /docs/README.md with navigation index
+
+Phase 2: Consolidate modules and heroes
+- Rename guild-hub/ → hub/
+- Consolidate heroes into /heroes/ (from /agents/heroes/ + /heroes/)
+- Move guild-quest/ to /tools/guild-quest/
+- Create /specs/ for specifications (rename from /agents/)
+- Update pom.xml with consolidated module references
+
+Phase 3: Add metadata for IA tools integration
+- Add frontmatter YAML to 15+ documentation files
+- Define ai-context: navigation, quickstart, guide, reference, decision-record, hero-spec, quest
+- Define ai-audience: all, junior-developers, senior-developers, architects, maintainers, AI-tools, new-heroes
+- Define ai-scope: concise descriptions for each document
+
+Phase 4: Codify continuous maintenance practices
+- Create docs/MAINTENANCE.md with 10 governance sections
+- Create .github/pull_request_template.md with quality checklist
+- Create PHASE_4_SUMMARY.md with roadmap for Phases 4.1-4.3
+- Create REORGANIZATION_COMPLETE.md as completion report
+- Create COMMIT_CHECKLIST.md as verification guide
+
+Additional changes:
+- Rename CLAUDE.md → PRINCIPLES.md for semantic clarity
+- Update 50+ references across all .md files to reflect new structure
+- Validate zero broken references and 100% consistency
+
+Structure validates:
+✓ All directory structures in place
+✓ Frontmatter YAML on 15+ files
+✓ Zero broken internal links
+✓ pom.xml updated with new module layout
+✓ Zero references to deprecated paths (except documentation examples)
+✓ IA tools ready to navigate via metadata
+
+Ready for: Junior onboarding, Senior expansion, IA tool integration, Maintainer governance

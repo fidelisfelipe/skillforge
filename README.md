@@ -10,10 +10,12 @@
 
 | | Documento | Para quem |
 |---|---|---|
-| 🚪 | [GUILD_ONBOARDING.md](GUILD_ONBOARDING.md) | Novo na guilda? Comece aqui. |
-| ⚔️ | [QUEST_BOARD.md](QUEST_BOARD.md) | Tasks por nível com critérios de aceitação. |
-| 🧬 | [SKILL_MANIFEST_GUIDE.md](SKILL_MANIFEST_GUIDE.md) | Como declarar e validar suas skills. |
-| 🏰 | [guild-hub/README.md](guild-hub/README.md) | Orquestrador central — API, fluxo fork→registro, SSE. |
+| 🗺️ | [INDEX.md](INDEX.md) | Mapa de navegação completo. |
+| ⚡ | [QUICK_START.md](QUICK_START.md) | 5 minutos para entender. |
+| 📚 | [docs/](docs/) | Documentação organizada (onboarding, progression, reference). |
+| 🧬 | [docs/reference/SKILL_MANIFEST_GUIDE.md](docs/reference/SKILL_MANIFEST_GUIDE.md) | Como declarar e validar suas skills. |
+| 🚀 | [docs/onboarding/GUILD_ONBOARDING.md](docs/onboarding/GUILD_ONBOARDING.md) | Onboarding para novos heróis. |
+| 🏰 | [hub/README.md](hub/README.md) | Orquestrador central — API, fluxo fork→registro, SSE. |
 
 ---
 
@@ -81,7 +83,7 @@ Problema submetido →  hub seleciona heróis relevantes
 | EPIC | 5–6 | 500–1000 | Expert+ |
 | LEGENDARY | 6+ | 1000+ | Master+ |
 
-Ver todas as quests disponíveis → [QUEST_BOARD.md](QUEST_BOARD.md)
+Ver todas as quests disponíveis → [docs/reference/QUEST_BOARD.md](docs/reference/QUEST_BOARD.md)
 
 ### Progressão do herói
 
@@ -202,6 +204,4 @@ Abra uma issue ou inicie uma discussão.
 
 ## Status
 
-Fase 1 em construção. Hero template funcional com dashboard web e integração GitHub API.
-
-Apresentação do projeto em [SkillForge](https://docs.google.com/presentation/d/1vWHbvu2ogMNudlQgvaOb-fZGpCl-LBP3CgbxnvFVz6U/edit?usp=sharing).
+Fase 1 em construção.

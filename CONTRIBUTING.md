@@ -6,7 +6,7 @@ Obrigado por querer melhorar a guilda. Este guia cobre o fluxo para contribuiç�
 
 ## Antes de começar
 
-- Leia o [`CLAUDE.md`](CLAUDE.md) — ele define as decisões técnicas inegociáveis do projeto.
+- Leia o [`PRINCIPLES.md`](PRINCIPLES.md) — ele define as decisões técnicas inegociáveis do projeto.
 - Verifique se já existe uma [issue](https://github.com/fidelisfelipe/skillforge/issues) relacionada à sua contribuição. Se não existir, abra uma antes do PR.
 
 ---
@@ -67,7 +67,7 @@ git checkout -b fix/nome-descritivo
 
 ### 4. Faça as alterações
 
-- Siga a stack canônica descrita no `CLAUDE.md`
+- Siga a stack canônica descrita no `PRINCIPLES.md`
 - Rode o build antes de commitar:
 
 ```bash
@@ -122,7 +122,7 @@ spring:
 
 ### LLM
 
-Avalie modelo local via Ollama antes de usar API paga. Consulte a hierarquia em `CLAUDE.md`.
+Avalie modelo local via Ollama antes de usar API paga. Consulte a hierarquia em `PRINCIPLES.md`.
 
 ---
 
