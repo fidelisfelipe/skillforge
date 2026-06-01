@@ -1,0 +1,11 @@
+{
+  "name": "kata-generator",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Generates SkillForge kata specs, tests and branches using Claude API",
+  "main": "generate.mjs",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "js-yaml": "^4.1.0"
+  }
+}

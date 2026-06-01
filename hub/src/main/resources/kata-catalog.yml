@@ -1,0 +1,334 @@
+themes:
+
+  - id: virtual-threads
+    name: "Virtual Threads & Concurrency"
+    description: "Master Java 21 Virtual Threads for efficient concurrency"
+    difficulty: intermediate
+    certReference: "Oracle Java 21 - Module 7"
+    katas:
+      - id: KATA-001A
+        title: "Virtual Threads: Hello Concurrency"
+        difficulty: intermediate
+        xpReward: 80
+        templateBranch: kata-001a-template
+        className: ConcurrentExecutor
+        spec: |
+          Substitua um FixedThreadPool de 10 threads por Virtual Threads
+          e demonstre que 10.000 tarefas concorrentes completam sem OutOfMemoryError.
+      - id: KATA-001B
+        title: "Virtual Threads: Blocking I/O Without Pain"
+        difficulty: intermediate
+        xpReward: 100
+        templateBranch: kata-001b-template
+        className: BlockingIoService
+        spec: |
+          Crie um serviço que faz 1.000 chamadas HTTP simuladas (Thread.sleep)
+          em Virtual Threads e meça o throughput comparado a platform threads.
+      - id: KATA-001C
+        title: "Structured Concurrency with StructuredTaskScope"
+        difficulty: advanced
+        xpReward: 120
+        templateBranch: kata-001c-template
+        className: AggregatorService
+        spec: |
+          Use StructuredTaskScope para fan-out/fan-in. Implemente um agregador
+          que chama 3 serviços em paralelo com ShutdownOnFailure, cancela os demais
+          se um falhar, e retorna o resultado combinado.
+
+  - id: records
+    name: "Records & Data Classes"
+    description: "Create immutable data carriers with Records"
+    difficulty: beginner
+    certReference: "Oracle Java 21 - Module 2"
+    katas:
+      - id: KATA-002A
+        title: "Records: Modelo de Domínio Imutável"
+        difficulty: beginner
+        xpReward: 80
+        templateBranch: kata-002a-template
+        className: MoneyRecord
+        spec: |
+          Converta Money, Address e Order em Java Records.
+          Garanta que equals/hashCode funcionem corretamente em coleções.
+      - id: KATA-002B
+        title: "Records: Compact Constructors e Validação"
+        difficulty: beginner
+        xpReward: 90
+        templateBranch: kata-002b-template
+        className: Temperature
+        spec: |
+          Crie um Record Temperature que aceita apenas valores entre -273.15°C e
+          1.416e32°C e lança IllegalArgumentException fora do range.
+      - id: KATA-002C
+        title: "Sealed Interfaces + Records: ADT em Java"
+        difficulty: intermediate
+        xpReward: 110
+        templateBranch: kata-002c-template
+        className: ExprEvaluator
+        spec: |
+          Defina sealed interface Expr com implementações Num, Add, Mul como Records.
+          Implemente um evaluator recursivo sem instanceof tradicional.
+
+  - id: pattern-matching
+    name: "Pattern Matching"
+    description: "Destructure and match complex data structures"
+    difficulty: advanced
+    certReference: "Oracle Java 21 - Module 5"
+    katas:
+      - id: KATA-003A
+        title: "Pattern Matching: instanceof sem Casting"
+        difficulty: intermediate
+        xpReward: 90
+        templateBranch: kata-003a-template
+        className: ShapeClassifier
+        spec: |
+          Refatore um método com 10+ blocos if (x instanceof Foo) { Foo f = (Foo) x; }
+          usando pattern matching para instanceof.
+      - id: KATA-003B
+        title: "Switch Expressions com Guarded Patterns"
+        difficulty: intermediate
+        xpReward: 100
+        templateBranch: kata-003b-template
+        className: ShapeAnalyzer
+        spec: |
+          Implemente um classificador de Shape (Circle, Rectangle, Triangle) que retorna
+          área, perímetro e categoria usando switch com when guards.
+      - id: KATA-003C
+        title: "Record Deconstruction Patterns"
+        difficulty: advanced
+        xpReward: 130
+        templateBranch: kata-003c-template
+        className: EventHandler
+        spec: |
+          Dado sealed interface Event com Records UserCreated(String id, String email),
+          OrderPlaced(String orderId, double amount), implemente um handler usando
+          deconstruction patterns.
+
+  - id: sealed-classes
+    name: "Sealed Classes & Interfaces"
+    description: "Model closed type hierarchies with sealed classes"
+    difficulty: intermediate
+    certReference: "Oracle Java 21 - Module 3"
+    katas:
+      - id: KATA-004A
+        title: "Sealed Classes: Payment Type Hierarchy"
+        difficulty: intermediate
+        xpReward: 90
+        templateBranch: kata-004a-template
+        className: PaymentProcessor
+        spec: |
+          Modele um sistema de pagamentos com sealed interface Payment e
+          implementações CreditCard, Pix, BankSlip. Implemente processamento
+          específico por tipo sem instanceof explícito.
+      - id: KATA-004B
+        title: "Sealed Types: Exhaustive Switch"
+        difficulty: advanced
+        xpReward: 110
+        templateBranch: kata-004b-template
+        className: ResultHandler
+        spec: |
+          Crie sealed interface Result<T> com Success<T> e Failure<T>.
+          O compilador deve garantir que todo switch seja exaustivo.
+
+  - id: text-blocks
+    name: "Text Blocks"
+    description: "Write multi-line strings cleanly with Text Blocks"
+    difficulty: beginner
+    certReference: "Oracle Java 21 - Module 1"
+    katas:
+      - id: KATA-005A
+        title: "Text Blocks: Templates sem Escape Hell"
+        difficulty: beginner
+        xpReward: 60
+        templateBranch: kata-005a-template
+        className: TemplateRenderer
+        spec: |
+          Converta geradores de JSON, HTML e SQL que usam concatenação e \n
+          para Text Blocks. Os testes verificam indentação e formatação corretas.
+
+  - id: switch-expressions
+    name: "Switch Expressions"
+    description: "Use switch as an expression with arrow syntax"
+    difficulty: intermediate
+    certReference: "Oracle Java 21 - Module 4"
+    katas:
+      - id: KATA-006A
+        title: "Switch Expressions: Substituir if-else chains"
+        difficulty: intermediate
+        xpReward: 80
+        templateBranch: kata-006a-template
+        className: DayClassifier
+        spec: |
+          Refatore métodos com if-else em cadeia para switch expressions com
+          arrow syntax. Cubra enums, Strings e tipos primitivos.
+      - id: KATA-006B
+        title: "Switch com yield e blocos"
+        difficulty: intermediate
+        xpReward: 90
+        templateBranch: kata-006b-template
+        className: PricingEngine
+        spec: |
+          Implemente um motor de precificação com lógica multi-linha em switch
+          usando yield. Cada case executa validações antes de retornar o preço.
+
+  - id: streams
+    name: "Stream API"
+    description: "Process collections with the Stream API"
+    difficulty: intermediate
+    certReference: "Oracle Java 21 - Module 8"
+    katas:
+      - id: KATA-007A
+        title: "Streams: Collectors e Agrupamento"
+        difficulty: intermediate
+        xpReward: 90
+        templateBranch: kata-007a-template
+        className: SalesReporter
+        spec: |
+          Dado um stream de vendas, agrupe por região, some por categoria e
+          encontre o top-3 produtos usando Collectors.groupingBy e downstream collectors.
+      - id: KATA-007B
+        title: "Streams: flatMap e composição de pipelines"
+        difficulty: intermediate
+        xpReward: 100
+        templateBranch: kata-007b-template
+        className: LibraryCatalog
+        spec: |
+          Processe uma lista de bibliotecas com livros aninhados. Use flatMap,
+          filter, distinct e sorted para construir um catálogo unificado.
+      - id: KATA-007C
+        title: "Custom Collector"
+        difficulty: advanced
+        xpReward: 130
+        templateBranch: kata-007c-template
+        className: RunningAverageCollector
+        spec: |
+          Implemente um Collector<Double, ?, DoubleSummaryStatistics> customizado
+          que calcula média móvel e desvio padrão em uma única passagem pelo stream.
+
+  - id: lambdas-functional
+    name: "Lambdas & Functional Interfaces"
+    description: "Compose behavior with lambdas and functional interfaces"
+    difficulty: intermediate
+    certReference: "Oracle Java 21 - Module 6"
+    katas:
+      - id: KATA-008A
+        title: "Function Composition Pipeline"
+        difficulty: intermediate
+        xpReward: 85
+        templateBranch: kata-008a-template
+        className: DataPipeline
+        spec: |
+          Construa um pipeline de transformação de dados usando Function.compose,
+          Function.andThen e Predicate.and/or. O pipeline deve ser imutável e reutilizável.
+      - id: KATA-008B
+        title: "Custom Functional Interfaces"
+        difficulty: intermediate
+        xpReward: 95
+        templateBranch: kata-008b-template
+        className: TriFunction
+        spec: |
+          Crie interfaces funcionais customizadas: TriFunction<A,B,C,R>,
+          ThrowingSupplier<T> e CheckedFunction<T,R>. Implemente adaptadores
+          que convertem checked exceptions para unchecked.
+
+  - id: optional
+    name: "Optional"
+    description: "Eliminate null checks with Optional"
+    difficulty: beginner
+    certReference: "Oracle Java 21 - Module 6"
+    katas:
+      - id: KATA-009A
+        title: "Optional: Eliminar null checks em cadeia"
+        difficulty: beginner
+        xpReward: 70
+        templateBranch: kata-009a-template
+        className: UserProfileService
+        spec: |
+          Refatore um serviço com null checks aninhados (user.getAddress().getCity())
+          para Optional com map, flatMap e orElseThrow. Nenhum if (x == null) permitido.
+
+  - id: collections-generics
+    name: "Collections & Generics"
+    description: "Use collections and generics effectively"
+    difficulty: intermediate
+    certReference: "Oracle Java 21 - Module 9"
+    katas:
+      - id: KATA-010A
+        title: "Generics: Bounded Type Parameters"
+        difficulty: intermediate
+        xpReward: 95
+        templateBranch: kata-010a-template
+        className: NumberStats
+        spec: |
+          Implemente uma classe genérica NumberStats<T extends Number> que calcula
+          min, max e soma sem cast. Use wildcards (? extends, ? super) nos métodos utilitários.
+      - id: KATA-010B
+        title: "Collections: Algoritmos e Ordenação"
+        difficulty: intermediate
+        xpReward: 85
+        templateBranch: kata-010b-template
+        className: MultiIndexMap
+        spec: |
+          Construa um MultiIndexMap<K,V> que permite busca por múltiplos índices
+          usando Map, List e Set. Garanta consistência entre índices nas operações de escrita.
+
+  - id: concurrency-classic
+    name: "Concurrency Classic"
+    description: "Master CompletableFuture and concurrent data structures"
+    difficulty: advanced
+    certReference: "Oracle Java 21 - Module 7"
+    katas:
+      - id: KATA-011A
+        title: "CompletableFuture: Pipeline Assíncrono"
+        difficulty: advanced
+        xpReward: 120
+        templateBranch: kata-011a-template
+        className: AsyncOrderPipeline
+        spec: |
+          Construa um pipeline de processamento de pedidos com CompletableFuture:
+          validar → enriquecer → persistir → notificar. Use thenCompose, thenCombine
+          e exceptionally para tratamento de erros.
+      - id: KATA-011B
+        title: "Thread-safe Data Structures"
+        difficulty: advanced
+        xpReward: 110
+        templateBranch: kata-011b-template
+        className: BoundedBlockingCache
+        spec: |
+          Implemente um cache thread-safe com tamanho máximo usando ReentrantLock,
+          Condition e LinkedHashMap com política LRU. Suporte leitores concorrentes
+          com ReadWriteLock.
+
+  - id: modules-jpms
+    name: "Java Platform Module System"
+    description: "Structure applications with JPMS modules"
+    difficulty: intermediate
+    certReference: "Oracle Java 21 - Module 11"
+    katas:
+      - id: KATA-012A
+        title: "JPMS: Criar e Consumir um Módulo"
+        difficulty: intermediate
+        xpReward: 100
+        templateBranch: kata-012a-template
+        className: ModuleConsumer
+        spec: |
+          Crie um módulo com module-info.java que exporta uma API de cálculo financeiro
+          e consome um módulo de logging. Os testes verificam encapsulamento
+          (tipos internos não acessíveis de fora).
+
+  - id: exceptions
+    name: "Exception Handling"
+    description: "Design robust exception hierarchies"
+    difficulty: beginner
+    certReference: "Oracle Java 21 - Module 10"
+    katas:
+      - id: KATA-013A
+        title: "Exception Hierarchy: Domínio Financeiro"
+        difficulty: beginner
+        xpReward: 65
+        templateBranch: kata-013a-template
+        className: PaymentException
+        spec: |
+          Crie uma hierarquia de exceções para um domínio financeiro:
+          PaymentException (base), InsufficientFundsException, AccountBlockedException.
+          Use multi-catch, try-with-resources e suppressed exceptions.

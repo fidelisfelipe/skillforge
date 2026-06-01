@@ -38,3 +38,7 @@ out/
 # Local config overrides (keep manifest.json tracked as template)
 application-local.yml
 .env
+
+# kata-generator
+scripts/kata-generator/node_modules/
+scripts/kata-generator/output/
