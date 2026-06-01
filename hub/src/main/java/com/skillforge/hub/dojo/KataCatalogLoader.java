@@ -26,8 +26,9 @@ public class KataCatalogLoader {
             var resource = new ClassPathResource("kata-catalog.yml");
             var catalog = mapper.readValue(resource.getInputStream(), Catalog.class);
             this.themes = catalog.themes() != null ? catalog.themes() : List.of();
-            log.info("📚 Kata catalog loaded: {} themes, {} katas",
-                themes.size(),
+            long withKatas = themes.stream().filter(t -> !t.katas().isEmpty()).count();
+            log.info("📚 Kata catalog loaded: {} chapters ({} with katas), {} katas",
+                themes.size(), withKatas,
                 themes.stream().mapToInt(t -> t.katas().size()).sum());
         } catch (Exception e) {
             log.error("❌ Failed to load kata-catalog.yml — falling back to empty catalog", e);
