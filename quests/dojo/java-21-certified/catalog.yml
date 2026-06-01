@@ -11,7 +11,98 @@ themes:
     description: "Class structure, data types, variable scope and object lifecycle"
     difficulty: beginner
     certReference: "OCP Java 21 (1Z0-830) — Chapter 1"
-    katas: []
+    katas:
+      - id: KATA-015A
+        title: "Tipos primitivos: limites e literais"
+        difficulty: beginner
+        xpReward: 70
+        templateBranch: kata-015a-template
+        className: PrimitiveLimits
+        spec: |
+          Implemente uma classe utilitária com métodos que retornam valores literais e limites dos tipos primitivos do Java.
+          
+          Métodos a implementar:
+          
+          1. `int maxByte()` — retorna o valor máximo de um `byte` (use `Byte.MAX_VALUE`).
+          2. `long binaryLiteral()` — retorna o número 10 expresso como literal binário (`0b1010`).
+          3. `long underscoreMillion()` — retorna 1_000_000 usando separadores de underline no literal.
+          4. `int hexFifteen()` — retorna 15 escrito como literal hexadecimal (`0xF`).
+          5. `double scientificNotation()` — retorna 1.5e3 (igual a 1500.0).
+          
+          Objetivo: praticar literais numéricos, underscores, prefixos `0b`/`0x` e notação científica.
+      - id: KATA-015B
+        title: "Inferência de tipo com var"
+        difficulty: beginner
+        xpReward: 70
+        templateBranch: kata-015b-template
+        className: VarInference
+        spec: |
+          Implemente métodos usando a palavra-chave `var` para variáveis locais. Lembre-se que `var` só funciona em variáveis locais (não em campos, parâmetros ou retornos) e exige inicialização.
+          
+          Métodos a implementar:
+          
+          1. `String greet(String name)` — declare `var greeting = "Olá, "` e concatene com `name`, retornando o resultado.
+          2. `int sumList()` — declare `var numbers = java.util.List.of(1, 2, 3, 4, 5)` e retorne a soma (15).
+          3. `int countWords(String sentence)` — declare `var parts = sentence.split(" ")` e retorne `parts.length`.
+          4. `double averageOfTen()` — use `var total = 0.0` em um laço de 1 a 10, retornando a média (5.5).
+          
+          Objetivo: usar `var` corretamente em escopo local e perceber que o tipo é inferido em tempo de compilação.
+      - id: KATA-015C
+        title: "Escopo de variáveis: bloco, método e classe"
+        difficulty: beginner
+        xpReward: 75
+        templateBranch: kata-015c-template
+        className: ScopeRules
+        spec: |
+          Implemente métodos que demonstram as regras de escopo em Java: variáveis de bloco, variáveis locais (método) e variáveis de instância (classe).
+          
+          Elementos a implementar:
+          
+          1. Campo de instância `int counter` inicializado em 0.
+          2. `int increment()` — incrementa `counter` em 1 e retorna o novo valor.
+          3. `int currentCounter()` — retorna o valor atual de `counter` sem modificá-lo.
+          4. `int sumBlockScope(int n)` — use um laço `for (int i = 1; i <= n; i++)` somando `i` em uma variável local `total`. Retorne `total`. A variável `i` deve existir apenas dentro do bloco do `for`.
+          5. `int shadowExample(int counter)` — receba um parâmetro chamado `counter` (sombreando o campo) e retorne `counter * 2`, sem alterar o campo da instância.
+          
+          Objetivo: distinguir escopo de bloco, método e classe, além de entender variable shadowing.
+      - id: KATA-015D
+        title: "Inicialização: campos, construtores e blocos"
+        difficulty: beginner
+        xpReward: 80
+        templateBranch: kata-015d-template
+        className: ObjectLifecycle
+        spec: |
+          Implemente uma classe que demonstra a ordem de inicialização de um objeto Java.
+          
+          Requisitos:
+          
+          1. Campo `java.util.List<String> log` inicializado como `new java.util.ArrayList<>()` na declaração.
+          2. Campo `int value` inicializado com 1 na declaração.
+          3. Bloco de inicialização de instância (`{ ... }`) que adiciona a string `"instance-init"` ao `log` e atualiza `value` para 2.
+          4. Construtor sem argumentos que adiciona `"constructor"` ao `log` e atualiza `value` para 3.
+          5. Método `java.util.List<String> getLog()` que retorna a lista `log`.
+          6. Método `int getValue()` que retorna `value`.
+          
+          Após `new ObjectLifecycle()`, o log deve conter exatamente ["instance-init", "constructor"] e `value` deve ser 3.
+          
+          Objetivo: entender a ordem: inicialização de campos → bloco de instância → construtor.
+      - id: KATA-015E
+        title: "Ciclo de vida e elegibilidade ao GC"
+        difficulty: beginner
+        xpReward: 75
+        templateBranch: kata-015e-template
+        className: GarbageCollectionDemo
+        spec: |
+          Implemente métodos que demonstram conceitos de elegibilidade para garbage collection e referências em Java.
+          
+          Métodos a implementar:
+          
+          1. `String createAndDiscard()` — crie uma `StringBuilder` local com `"temp"`, atribua-a a uma variável, depois reatribua a variável para `null` e retorne a string `"discarded"`. (Demonstra perda de referência.)
+          2. `int sizeBeforeNull()` — crie uma `java.util.List<Integer>` com 3 elementos, guarde seu tamanho em uma variável, atribua a referência da lista para `null` e retorne o tamanho guardado (3).
+          3. `String reassignReference()` — declare `var s = new String("primeiro")`, depois reatribua `s = new String("segundo")` e retorne `s`. O resultado deve ser `"segundo"`. (O primeiro objeto torna-se elegível ao GC.)
+          4. `boolean isSameReference()` — crie duas variáveis apontando para o **mesmo** objeto `Object obj = new Object(); Object alias = obj;` e retorne `obj == alias` (deve ser `true`).
+          
+          Objetivo: compreender quando objetos tornam-se elegíveis ao garbage collector e a diferença entre referência e objeto.
 
   # ─────────────────────────────────────────────────────────────
   # Chapter 2 — Operators
@@ -23,7 +114,97 @@ themes:
     description: "Unary, binary, comparison and ternary operators"
     difficulty: beginner
     certReference: "OCP Java 21 (1Z0-830) — Chapter 2"
-    katas: []
+    katas:
+      - id: KATA-016A
+        title: "Operadores aritméticos e precedência"
+        difficulty: beginner
+        xpReward: 65
+        templateBranch: kata-016a-template
+        className: ArithmeticOps
+        spec: |
+          Implemente uma classe utilitária com métodos que demonstrem operadores aritméticos e regras de precedência em Java.
+          
+          Métodos a implementar:
+          
+          1. `int sum(int a, int b)` — retorna a soma de `a` e `b`.
+          2. `int remainder(int a, int b)` — retorna o resto da divisão de `a` por `b` (operador `%`).
+          3. `int integerDivision(int a, int b)` — retorna a divisão inteira de `a` por `b` (operador `/` entre inteiros).
+          4. `double mixedDivision(int a, int b)` — retorna a divisão de `a` por `b` como `double` (promoção numérica).
+          5. `int precedenceExample()` — retorna o resultado de `2 + 3 * 4 - 10 / 2` (espera-se 9), respeitando precedência sem usar parênteses extras.
+          
+          Objetivo: praticar `+`, `-`, `*`, `/`, `%`, promoção numérica e precedência de operadores.
+      - id: KATA-016B
+        title: "Operadores unários: incremento e decremento"
+        difficulty: beginner
+        xpReward: 70
+        templateBranch: kata-016b-template
+        className: UnaryOps
+        spec: |
+          Implemente métodos que demonstrem operadores unários do Java: `++`, `--`, `-` (negação) e `!` (negação lógica).
+          
+          Métodos a implementar:
+          
+          1. `int postIncrementResult(int x)` — recebe `x`, executa `x++` e retorna o valor de `x` APÓS o incremento (espera-se `x + 1`).
+          2. `int preIncrementResult(int x)` — recebe `x`, executa `++x` e retorna o valor resultante (espera-se `x + 1`).
+          3. `int postIncrementInExpression()` — declare `int a = 5;` e retorne o resultado de `a++ + a` (deve retornar `5 + 6 = 11`).
+          4. `int negate(int x)` — retorna `-x` usando o operador unário de negação.
+          5. `boolean not(boolean b)` — retorna `!b`.
+          
+          Objetivo: entender a diferença entre pré e pós incremento e o uso dos operadores unários.
+      - id: KATA-016C
+        title: "Operadores de comparação"
+        difficulty: beginner
+        xpReward: 65
+        templateBranch: kata-016c-template
+        className: ComparisonOps
+        spec: |
+          Implemente métodos que utilizem operadores de comparação relacionais (`<`, `>`, `<=`, `>=`, `==`, `!=`).
+          
+          Métodos a implementar:
+          
+          1. `boolean isGreater(int a, int b)` — retorna `true` se `a > b`.
+          2. `boolean isLessOrEqual(int a, int b)` — retorna `true` se `a <= b`.
+          3. `boolean areEqual(int a, int b)` — retorna `true` se `a == b`.
+          4. `boolean areDifferent(int a, int b)` — retorna `true` se `a != b`.
+          5. `boolean inRange(int value, int min, int max)` — retorna `true` se `value` está entre `min` e `max` inclusivos (use `>=` e `<=` combinados com `&&`).
+          
+          Objetivo: praticar operadores relacionais que retornam `boolean`.
+      - id: KATA-016D
+        title: "Operadores lógicos e curto-circuito"
+        difficulty: beginner
+        xpReward: 75
+        templateBranch: kata-016d-template
+        className: LogicalOps
+        spec: |
+          Implemente métodos que demonstrem operadores lógicos do Java: `&&`, `||`, `!`, `&` e `|`.
+          
+          Métodos a implementar:
+          
+          1. `boolean and(boolean a, boolean b)` — retorna `a && b` (E lógico com curto-circuito).
+          2. `boolean or(boolean a, boolean b)` — retorna `a || b` (OU lógico com curto-circuito).
+          3. `boolean xor(boolean a, boolean b)` — retorna `a ^ b` (OU exclusivo).
+          4. `boolean shortCircuitSafe(Integer value)` — retorna `value != null && value > 0`. O método deve aproveitar o curto-circuito para evitar `NullPointerException` quando `value` é `null`.
+          5. `boolean isLeapYear(int year)` — retorna `true` se `year` é bissexto: divisível por 4 e (não divisível por 100 ou divisível por 400).
+          
+          Objetivo: praticar operadores lógicos e a importância do curto-circuito.
+      - id: KATA-016E
+        title: "Operador ternário"
+        difficulty: beginner
+        xpReward: 70
+        templateBranch: kata-016e-template
+        className: TernaryOps
+        spec: |
+          Implemente métodos usando exclusivamente o operador ternário (`condição ? valorSeVerdadeiro : valorSeFalso`). Não use `if/else` nestes métodos.
+          
+          Métodos a implementar:
+          
+          1. `int max(int a, int b)` — retorna o maior entre `a` e `b` usando ternário.
+          2. `String parity(int n)` — retorna `"par"` se `n` é par, `"ímpar"` caso contrário.
+          3. `int absoluteValue(int n)` — retorna o valor absoluto de `n` usando ternário.
+          4. `String sign(int n)` — retorna `"positivo"`, `"negativo"` ou `"zero"` conforme o sinal de `n`. Pode usar ternário aninhado.
+          5. `int clamp(int value, int min, int max)` — retorna `min` se `value < min`, `max` se `value > max`, caso contrário `value`. Use ternário aninhado.
+          
+          Objetivo: praticar o operador ternário, inclusive aninhado.
 
   # ─────────────────────────────────────────────────────────────
   # Chapter 3 — Making Decisions
@@ -105,7 +286,117 @@ themes:
     description: "Method design, varargs, access modifiers, static members and overloading"
     difficulty: beginner
     certReference: "OCP Java 21 (1Z0-830) — Chapter 5"
-    katas: []
+    katas:
+      - id: KATA-017A
+        title: "Sobrecarga de métodos: resolução pelo tipo do parâmetro"
+        difficulty: intermediate
+        xpReward: 90
+        templateBranch: kata-017a-template
+        className: OverloadResolver
+        spec: |
+          Implemente uma classe `OverloadResolver` com vários métodos `describe` sobrecarregados que retornam uma `String` indicando qual sobrecarga foi escolhida pelo compilador.
+          
+          Métodos a implementar:
+          
+          1. `String describe(int x)` — retorna `"int"`.
+          2. `String describe(long x)` — retorna `"long"`.
+          3. `String describe(double x)` — retorna `"double"`.
+          4. `String describe(Integer x)` — retorna `"Integer"`.
+          5. `String describe(Object x)` — retorna `"Object"`.
+          6. `String describe(String x)` — retorna `"String"`.
+          
+          Objetivo: compreender a ordem de resolução de sobrecarga do Java — correspondência exata > widening primitivo > autoboxing > varargs, e que tipos específicos têm precedência sobre `Object`.
+          
+          Observação: NÃO crie um método `describe(short)`; o teste passará um `short` e verificará que ele sofre widening para `int`.
+      - id: KATA-017B
+        title: "Varargs: somatórios e estatísticas"
+        difficulty: intermediate
+        xpReward: 95
+        templateBranch: kata-017b-template
+        className: VarargsCalculator
+        spec: |
+          Implemente uma classe `VarargsCalculator` que utiliza parâmetros varargs (`...`) para operar sobre uma quantidade variável de argumentos.
+          
+          Métodos a implementar:
+          
+          1. `int sum(int... numbers)` — retorna a soma de todos os números; retorna `0` se nenhum argumento for passado.
+          2. `double average(double... values)` — retorna a média aritmética; retorna `0.0` se o array estiver vazio.
+          3. `int max(int first, int... rest)` — retorna o maior valor considerando `first` e todos os elementos de `rest`. O parâmetro `first` é obrigatório.
+          4. `String join(String separator, String... parts)` — concatena `parts` separados por `separator`. Se `parts` estiver vazio, retorna `""`.
+          5. `int count(Object... items)` — retorna a quantidade de itens recebidos (tamanho do array de varargs).
+          
+          Objetivo: praticar varargs, lembrar que internamente são arrays e que apenas o último parâmetro pode ser varargs.
+      - id: KATA-017C
+        title: "Passagem por valor: primitivos e referências"
+        difficulty: intermediate
+        xpReward: 100
+        templateBranch: kata-017c-template
+        className: PassByValueDemo
+        spec: |
+          Java sempre passa argumentos por valor. Para primitivos, isso significa cópia do valor; para objetos, cópia da referência (ambas apontam para o mesmo objeto).
+          
+          Implemente uma classe `PassByValueDemo` com os métodos:
+          
+          1. `void increment(int x)` — tenta incrementar `x` em 1. Como `int` é primitivo, a alteração NÃO se propaga para o chamador. O corpo deve apenas executar `x++;`.
+          
+          2. `void reassignArray(int[] arr)` — reatribui o parâmetro local: `arr = new int[]{99, 99, 99};`. A reatribuição NÃO afeta o array original do chamador.
+          
+          3. `void mutateArray(int[] arr)` — se `arr` não for nulo e tiver pelo menos 1 elemento, define `arr[0] = 42`. A mutação SE PROPAGA pois ambos referenciam o mesmo objeto.
+          
+          4. `void appendExclamation(StringBuilder sb)` — chama `sb.append("!")`. A mutação do objeto SE PROPAGA.
+          
+          5. `void reassignStringBuilder(StringBuilder sb)` — executa `sb = new StringBuilder("novo");`. A reatribuição NÃO afeta o chamador.
+          
+          Objetivo: entender a distinção entre mutação de objeto (visível) e reatribuição de referência (invisível) ao chamador.
+      - id: KATA-017D
+        title: "Métodos estáticos vs de instância"
+        difficulty: intermediate
+        xpReward: 95
+        templateBranch: kata-017d-template
+        className: Counter
+        spec: |
+          Implemente uma classe `Counter` que demonstra a diferença entre membros estáticos (compartilhados pela classe) e de instância (próprios de cada objeto).
+          
+          Requisitos:
+          
+          1. Campo de instância `private int count` que começa em 0.
+          2. Campo estático `private static int totalInstances` que conta quantas instâncias da classe foram criadas. Deve ser incrementado no construtor.
+          3. Construtor sem argumentos que incrementa `totalInstances`.
+          4. `void increment()` — método de instância que incrementa `count` em 1.
+          5. `int getCount()` — método de instância que retorna o valor de `count`.
+          6. `static int getTotalInstances()` — método estático que retorna `totalInstances`.
+          7. `static void resetTotalInstances()` — método estático que zera `totalInstances` (útil para testes).
+          8. `static int sumOfCounts(Counter... counters)` — método estático que recebe varargs de `Counter` e retorna a soma dos `count` de cada um.
+          
+          Objetivo: praticar a distinção entre estado por instância e estado por classe, e a impossibilidade de acessar `this` em métodos estáticos.
+      - id: KATA-017E
+        title: "Sobrecarga com autoboxing e varargs"
+        difficulty: intermediate
+        xpReward: 110
+        templateBranch: kata-017e-template
+        className: BoxingOverload
+        spec: |
+          Quando há sobrecarga envolvendo primitivos, wrappers e varargs, o compilador segue uma ordem estrita de preferência: (1) correspondência exata, (2) widening primitivo, (3) autoboxing/unboxing, (4) varargs (sempre por último).
+          
+          Implemente uma classe `BoxingOverload` com:
+          
+          1. `String pick(int x)` — retorna `"int"`.
+          2. `String pick(Integer x)` — retorna `"Integer"`.
+          3. `String pick(long x)` — retorna `"long"`.
+          4. `String pick(int... xs)` — retorna `"varargs"`.
+          5. `String pick(Object x)` — retorna `"Object"`.
+          
+          E também os métodos:
+          
+          6. `String invokeWithInt()` — chame internamente `pick(7)` (literal `int`) e retorne o resultado. Deve resolver para `"int"`.
+          
+          7. `String invokeWithInteger()` — declare `Integer i = 7;` e chame `pick(i)`. Deve resolver para `"Integer"`.
+          
+          8. `String invokeWithShort()` — declare `short s = 7;` e chame `pick(s)`. Como não há sobrecarga para `short`, ocorre widening para `int`, resultando em `"int"`.
+          
+          9. `String invokeWithTwoInts()` — chame `pick(1, 2)`. Como há dois argumentos, apenas a sobrecarga varargs corresponde: `"varargs"`.
+          
+          Objetivo: dominar a ordem de resolução de sobrecarga em situações ambíguas com boxing e varargs.
 
   # ─────────────────────────────────────────────────────────────
   # Chapter 6 — Class Design
