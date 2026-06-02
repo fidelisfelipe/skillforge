@@ -55,10 +55,13 @@ public class HubDashboardController {
         model.addAttribute("questsByRarity",  questBoard.getCountByRarity());
         model.addAttribute("lastFetchMs",     registry.getLastFetchMs());
         model.addAttribute("onlineHeroes",    presence != null ? presence.getOnlineHeroes() : Set.of());
-        model.addAttribute("kataThemes",      kataService.getThemeEntries());
-        model.addAttribute("kataSolutions",   kataProgress);
-        model.addAttribute("kataCount",       kataService.getKataCount());
-        model.addAttribute("kataSolvedCount", kataProgress.getSolvedKataCount());
+        var themes = kataService.getThemeEntries();
+        model.addAttribute("kataThemes",         themes);
+        model.addAttribute("kataSolutions",       kataProgress);
+        model.addAttribute("kataCount",           kataService.getKataCount());
+        model.addAttribute("kataSolvedCount",     kataProgress.getSolvedKataCount());
+        model.addAttribute("kataChapterCount",    themes.size());
+        model.addAttribute("kataActiveChapters",  themes.stream().filter(t -> !t.katas().isEmpty()).count());
     }
 
     @GetMapping(value = "/events", produces = "text/event-stream")

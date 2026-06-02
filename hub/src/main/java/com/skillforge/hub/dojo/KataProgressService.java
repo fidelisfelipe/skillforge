@@ -61,4 +61,8 @@ public class KataProgressService {
     public int getSolvedKataCount() {
         return (int) byKata.values().stream().filter(l -> !l.isEmpty()).count();
     }
+
+    public long getSolvedCount(List<KataCatalogLoader.KataEntry> katas) {
+        return katas.stream().filter(k -> isSolved(k.id())).count();
+    }
 }
