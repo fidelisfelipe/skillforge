@@ -1,5 +1,6 @@
 package com.skillforge.hub.web;
 
+import com.skillforge.hub.dojo.GitHubForksService;
 import com.skillforge.hub.dojo.KataProgressService;
 import com.skillforge.hub.dojo.KataService;
 import com.skillforge.hub.service.HeroPresenceService;
@@ -13,10 +14,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Controller
 public class HubDashboardController {
@@ -25,6 +28,7 @@ public class HubDashboardController {
     private final QuestBoardService questBoard;
     private final KataService kataService;
     private final KataProgressService kataProgress;
+    private final GitHubForksService forksService;
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     // @Lazy quebra a dependência circular: HeroPresenceService → HubDashboardController
@@ -32,11 +36,13 @@ public class HubDashboardController {
     private HeroPresenceService presence;
 
     public HubDashboardController(HeroRegistryService registry, QuestBoardService questBoard,
-                                  KataService kataService, KataProgressService kataProgress) {
+                                  KataService kataService, KataProgressService kataProgress,
+                                  GitHubForksService forksService) {
         this.registry = registry;
         this.questBoard = questBoard;
         this.kataService = kataService;
         this.kataProgress = kataProgress;
+        this.forksService = forksService;
     }
 
     @GetMapping("/")
@@ -62,6 +68,39 @@ public class HubDashboardController {
         model.addAttribute("kataSolvedCount",     kataProgress.getSolvedKataCount());
         model.addAttribute("kataChapterCount",    themes.size());
         model.addAttribute("kataActiveChapters",  themes.stream().filter(t -> !t.katas().isEmpty()).count());
+        model.addAttribute("heroStats",            kataProgress.getHeroStats());
+        model.addAttribute("forks",                forksService.getForks());
+        model.addAttribute("forkCount",            forksService.getForkCount());
+
+        var forkerLogins = forksService.getForks().stream()
+            .map(GitHubForksService.ForkEntry::login).collect(Collectors.toSet());
+        var statsMap = kataProgress.getHeroStats().stream()
+            .collect(Collectors.toMap(KataProgressService.HeroStats::heroId, s -> s));
+        var onlineSet  = presence != null ? presence.getOnlineHeroes() : Set.<String>of();
+        var lastSeenMap = presence != null ? presence.getLastSeen()    : Map.<String, Instant>of();
+
+        var heroViews = registry.getHeroes().stream()
+            .map(h -> new HeroStatusView(
+                h.heroId(), h.heroName(), h.avatarUrl(), h.githubLogin(),
+                onlineSet.contains(h.heroId()),
+                lastSeenLabel(lastSeenMap.get(h.heroId()), onlineSet.contains(h.heroId())),
+                forkerLogins.contains(h.githubLogin()),
+                Optional.ofNullable(statsMap.get(h.heroId()))
+                    .map(KataProgressService.HeroStats::katasSolved).orElse(0)
+            ))
+            .sorted(Comparator.comparing(HeroStatusView::online).reversed()
+                .thenComparingInt(HeroStatusView::katasSolved).reversed())
+            .toList();
+        model.addAttribute("heroViews", heroViews);
+
+        // forkers que ainda não se registraram
+        var registeredLogins = registry.getHeroes().stream()
+            .map(h -> h.githubLogin() != null ? h.githubLogin().toLowerCase() : "")
+            .collect(Collectors.toSet());
+        var unregisteredForks = forksService.getForks().stream()
+            .filter(f -> !registeredLogins.contains(f.login().toLowerCase()))
+            .toList();
+        model.addAttribute("unregisteredForks", unregisteredForks);
     }
 
     @GetMapping(value = "/events", produces = "text/event-stream")
@@ -85,6 +124,27 @@ public class HubDashboardController {
         });
 
         return emitter;
+    }
+
+    public record HeroStatusView(
+        String heroId,
+        String heroName,
+        String avatarUrl,
+        String githubLogin,
+        boolean online,
+        String lastSeenLabel,
+        boolean hasFork,
+        int katasSolved
+    ) {}
+
+    private static String lastSeenLabel(Instant ts, boolean online) {
+        if (online) return "online";
+        if (ts == null) return "nunca visto";
+        long secs = Duration.between(ts, Instant.now()).getSeconds();
+        if (secs < 60)    return "há " + secs + "s";
+        if (secs < 3600)  return "há " + (secs / 60) + "min";
+        if (secs < 86400) return "há " + (secs / 3600) + "h";
+        return "há " + (secs / 86400) + "d";
     }
 
     public void broadcast(String eventName, String data) {

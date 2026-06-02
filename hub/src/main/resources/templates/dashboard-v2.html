@@ -114,6 +114,49 @@
             background: var(--s2); border: 1px solid var(--border);
         }
         .sol-row { display: flex; justify-content: space-between; align-items: center; }
+
+        /* Hero presence */
+        .hero-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px; padding: 16px;
+        }
+        .hero-tile {
+            background: var(--s2); border: 1.5px solid var(--border); border-radius: var(--r);
+            padding: 14px 10px; display: flex; flex-direction: column; align-items: center;
+            gap: 5px; text-align: center; transition: border-color .25s, background .25s;
+        }
+        .hero-tile.is-online { border-color: #86efac; background: var(--green-soft); }
+        .hero-avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            border: 2px solid var(--border); object-fit: cover;
+        }
+        .hero-avatar-fallback {
+            width: 42px; height: 42px; border-radius: 50%; background: var(--s3);
+            border: 2px solid var(--border); display: flex; align-items: center;
+            justify-content: center; font-size: 18px; color: var(--text-3);
+        }
+        .hero-presence-row { display: flex; align-items: center; gap: 5px; }
+        .hero-pdot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--border-strong); flex-shrink: 0; transition: background .3s;
+        }
+        .hero-pdot.live { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+        .hero-name { font-size: 12px; font-weight: 600; color: var(--text); }
+        .hero-plbl { font-size: 10px; color: var(--text-3); }
+        .hero-meta-row { display: flex; gap: 6px; align-items: center; }
+        .hero-meta-item { font-size: 10px; color: var(--text-3); }
+        .fork-chip {
+            font-size: 9px; font-weight: 600; padding: 1px 5px;
+            border-radius: 99px; background: var(--purple-soft);
+            color: var(--purple); border: 1px solid #ddd6fe;
+        }
+
+        /* Unregistered forkers */
+        .forker-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 16px; border-top: 1px solid var(--border);
+        }
+        .forker-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
@@ -276,6 +319,80 @@
         </div>
     </div>
 
+    <!-- Heróis da Guilda -->
+    <div class="card" style="margin-top:20px;">
+        <div class="card-hd">
+            <div>
+                <div class="card-label">Guilda</div>
+                <div class="card-title">Heróis</div>
+                <div class="card-sub">
+                    <span th:text="${#lists.size(heroViews)}">0</span> registrado(s) ·
+                    <span id="online-count"
+                          th:text="${#lists.size(heroViews.?[online == true])}">0</span> online ·
+                    <span th:text="${forkCount}">0</span> fork(s)
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero tiles -->
+        <div th:if="${#lists.isEmpty(heroViews)}"
+             style="padding:40px;text-align:center;color:var(--text-3);font-size:13px;">
+            Nenhum herói registrado ainda.
+        </div>
+        <div class="hero-grid" th:unless="${#lists.isEmpty(heroViews)}">
+            <div th:each="h : ${heroViews}"
+                 th:id="'hero-' + ${h.heroId()}"
+                 th:class="${h.online()} ? 'hero-tile is-online' : 'hero-tile'">
+
+                <!-- Avatar -->
+                <img th:if="${h.avatarUrl() != null and !h.avatarUrl().isBlank()}"
+                     class="hero-avatar"
+                     th:src="${h.avatarUrl()}"
+                     th:alt="${h.heroName()}">
+                <div th:unless="${h.avatarUrl() != null and !h.avatarUrl().isBlank()}"
+                     class="hero-avatar-fallback">🦸</div>
+
+                <!-- Name -->
+                <div class="hero-name" th:text="${h.heroName() != null and !h.heroName().isBlank() ? h.heroName() : h.heroId()}">—</div>
+                <code style="font-size:10px;color:var(--text-3);" th:text="${h.heroId()}">id</code>
+
+                <!-- Presence -->
+                <div class="hero-presence-row">
+                    <span th:class="${h.online()} ? 'hero-pdot live' : 'hero-pdot'"
+                          th:id="'pdot-' + ${h.heroId()}"></span>
+                    <span class="hero-plbl"
+                          th:id="'plbl-' + ${h.heroId()}"
+                          th:text="${h.lastSeenLabel()}">—</span>
+                </div>
+
+                <!-- Meta: katas + fork badge -->
+                <div class="hero-meta-row">
+                    <span th:if="${h.katasSolved() > 0}"
+                          class="hero-meta-item"
+                          th:text="${h.katasSolved()} + ' kata(s)'">0 katas</span>
+                    <span th:if="${h.hasFork()}" class="fork-chip">fork</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forkers sem registro -->
+        <div th:unless="${#lists.isEmpty(unregisteredForks)}"
+             style="border-top:1px solid var(--border);padding:12px 16px 4px;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:.07em;
+                        text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">
+                Forks sem registro
+            </div>
+            <div class="forker-row" th:each="f : ${unregisteredForks}">
+                <img class="forker-avatar" th:src="${f.avatarUrl()}" th:alt="${f.login()}">
+                <a th:href="${f.profileUrl()}" target="_blank" rel="noopener"
+                   style="font-size:12px;color:var(--text);font-weight:500;flex:1;"
+                   th:text="${f.login()}">login</a>
+                <span style="font-size:10px;color:var(--text-3);"
+                      th:text="${f.forkedAt()}">—</span>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script>
@@ -284,6 +401,34 @@
     const lbl = document.getElementById('sse-status');
     es.onopen  = () => { dot.className = 'sse-dot live'; lbl.textContent = 'ao vivo'; };
     es.onerror = () => { dot.className = 'sse-dot err';  lbl.textContent = 'desconectado'; };
+
+    es.addEventListener('HERO_ONLINE', e => {
+        const { heroId } = JSON.parse(e.data);
+        const tile = document.getElementById('hero-' + heroId);
+        if (tile) {
+            tile.classList.add('is-online');
+            const pdot = document.getElementById('pdot-' + heroId);
+            const plbl = document.getElementById('plbl-' + heroId);
+            if (pdot) pdot.className = 'hero-pdot live';
+            if (plbl) plbl.textContent = 'online';
+        }
+        const cnt = document.getElementById('online-count');
+        if (cnt) cnt.textContent = document.querySelectorAll('.hero-tile.is-online').length;
+    });
+
+    es.addEventListener('HERO_OFFLINE', e => {
+        const { heroId } = JSON.parse(e.data);
+        const tile = document.getElementById('hero-' + heroId);
+        if (tile) {
+            tile.classList.remove('is-online');
+            const pdot = document.getElementById('pdot-' + heroId);
+            const plbl = document.getElementById('plbl-' + heroId);
+            if (pdot) pdot.className = 'hero-pdot';
+            if (plbl) plbl.textContent = 'offline';
+        }
+        const cnt = document.getElementById('online-count');
+        if (cnt) cnt.textContent = document.querySelectorAll('.hero-tile.is-online').length;
+    });
 </script>
 </body>
 </html>

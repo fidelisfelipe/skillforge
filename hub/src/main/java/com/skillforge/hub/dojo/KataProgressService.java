@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Service
 public class KataProgressService {
@@ -64,5 +65,31 @@ public class KataProgressService {
 
     public long getSolvedCount(List<KataCatalogLoader.KataEntry> katas) {
         return katas.stream().filter(k -> isSolved(k.id())).count();
+    }
+
+    public record HeroStats(String heroId, int katasSolved, int totalXp, String lastSeen) {}
+
+    public List<HeroStats> getHeroStats() {
+        Map<String, Set<String>> katasByHero   = new HashMap<>();
+        Map<String, Integer>     xpByHero      = new HashMap<>();
+        Map<String, Long>        lastTsByHero   = new HashMap<>();
+
+        for (Map.Entry<String, List<KataSolution>> entry : byKata.entrySet()) {
+            for (KataSolution sol : entry.getValue()) {
+                katasByHero.computeIfAbsent(sol.heroId(), k -> new HashSet<>()).add(entry.getKey());
+                xpByHero.merge(sol.heroId(), sol.xpEarned(), Integer::sum);
+                lastTsByHero.merge(sol.heroId(), sol.timestamp(), Math::max);
+            }
+        }
+
+        return katasByHero.entrySet().stream()
+            .map(e -> new HeroStats(
+                e.getKey(),
+                e.getValue().size(),
+                xpByHero.getOrDefault(e.getKey(), 0),
+                FMT.format(Instant.ofEpochMilli(lastTsByHero.getOrDefault(e.getKey(), 0L)))
+            ))
+            .sorted(Comparator.comparingInt(HeroStats::katasSolved).reversed())
+            .collect(Collectors.toList());
     }
 }
