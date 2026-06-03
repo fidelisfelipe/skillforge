@@ -6,6 +6,7 @@ import com.skillforge.hub.service.HeroRegistryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.util.concurrent.CompletableFuture;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Map;
@@ -51,8 +53,8 @@ public class KataValidator {
     );
 
     @Async
-    public void validateAsync(String heroId, String kataId, String cloneUrl, String branch,
-                              int prNumber, String repoFullName) {
+    public CompletableFuture<Void> validateAsync(String heroId, String kataId, String cloneUrl, String branch,
+                                                 int prNumber, String repoFullName) {
         log.info("🔍 Starting validation | kata={} hero={} branch={}", kataId, heroId, branch);
         Path tempDir = null;
 
@@ -67,12 +69,14 @@ public class KataValidator {
                 String msg = "git clone failed — verify branch exists: " + branch;
                 publishFailure(heroId, kataId, 0, msg);
                 githubService.commentOnPR(repoFullName, prNumber, "❌ **Validation failed**\n\n" + msg);
-                return;
+                return CompletableFuture.completedFuture(null);
             }
 
             // 2. Run mvn verify
             StringBuilder output = new StringBuilder();
-            int mvnExit = runProcessWithOutput(tempDir, output, mvnExecutable(), "verify", "-B");
+            String mvn = mvnExecutable(tempDir);
+            log.info("🔧 Using Maven: {}", mvn);
+            int mvnExit = runProcessWithOutput(tempDir, output, mvn, "verify", "-B");
 
             boolean passed  = mvnExit == 0;
             int score       = passed ? 100 : parseScore(output.toString());
@@ -108,6 +112,7 @@ public class KataValidator {
         } finally {
             cleanup(tempDir);
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     private void creditKataToHeroIssue(String heroId, String kataId, int xpEarned, String skill) {
@@ -196,8 +201,30 @@ public class KataValidator {
         return sb.length() > 0 ? sb.toString().trim() : "Tests failed — run 'mvn verify' locally for details";
     }
 
-    private String mvnExecutable() {
-        return System.getProperty("os.name", "").toLowerCase().contains("win") ? "mvn.cmd" : "mvn";
+    @Value("${skillforge.maven.executable:}")
+    private String configuredMvn;
+
+    private String mvnExecutable(Path projectDir) {
+        if (configuredMvn != null && !configuredMvn.isBlank()) return configuredMvn;
+
+        boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
+
+        // 1. Maven wrapper inside the cloned project
+        String wrapperName = isWindows ? "mvnw.cmd" : "mvnw";
+        Path wrapper = projectDir.resolve(wrapperName);
+        if (Files.exists(wrapper)) return wrapper.toAbsolutePath().toString();
+
+        // 2. MAVEN_HOME or M2_HOME env var
+        for (String envVar : new String[]{"MAVEN_HOME", "M2_HOME"}) {
+            String home = System.getenv(envVar);
+            if (home != null && !home.isBlank()) {
+                Path candidate = Path.of(home, "bin", isWindows ? "mvn.cmd" : "mvn");
+                if (Files.exists(candidate)) return candidate.toAbsolutePath().toString();
+            }
+        }
+
+        // 3. Fallback to PATH
+        return isWindows ? "mvn.cmd" : "mvn";
     }
 
     private int runProcess(Path workDir, String... command) throws IOException, InterruptedException {

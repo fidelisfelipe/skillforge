@@ -39,7 +39,7 @@ public class KataSolutionLoader {
     private final GitHubClient gitHubClient;
 
     private static final Pattern BRANCH_PATTERN =
-        Pattern.compile("^kata-([0-9]+[a-z]+)-", Pattern.CASE_INSENSITIVE);
+        Pattern.compile("^kata-([a-z0-9]+)-", Pattern.CASE_INSENSITIVE);
     private static final Pattern SCORE_PATTERN =
         Pattern.compile("\\*\\*Score\\*\\*\\s*\\|\\s*(\\d+)/100");
     private static final Pattern XP_PATTERN =

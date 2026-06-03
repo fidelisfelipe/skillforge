@@ -2,6 +2,7 @@ package com.skillforge.hub.web;
 
 import com.skillforge.hub.GuildDashboardProperties;
 import com.skillforge.hub.dojo.GitHubForksService;
+import com.skillforge.hub.dojo.KataCatalogLoader;
 import com.skillforge.hub.dojo.KataProgressService;
 import com.skillforge.hub.dojo.KataService;
 import com.skillforge.hub.service.HeroPresenceService;
@@ -65,13 +66,26 @@ public class HubDashboardController {
         model.addAttribute("questsByRarity",  questBoard.getCountByRarity());
         model.addAttribute("lastFetchMs",     registry.getLastFetchMs());
         model.addAttribute("onlineHeroes",    presence != null ? presence.getOnlineHeroes() : Set.of());
-        var themes = kataService.getThemeEntries();
+        var themes     = kataService.getThemeEntries();
+        var dojoTracks = buildDojoTracks(themes, kataProgress);
+
+        var javaTrack = dojoTracks.stream().filter(t -> "java".equals(t.id())).findFirst().orElse(null);
+        var aiTrack   = dojoTracks.stream().filter(t -> "ai".equals(t.id())).findFirst().orElse(null);
+
+        long javaChapterCount   = javaTrack == null ? 0 : javaTrack.subjects().stream().mapToLong(s -> s.themes().size()).sum();
+        long javaActiveChapters = javaTrack == null ? 0 : javaTrack.subjects().stream().flatMap(s -> s.themes().stream()).filter(t -> !t.katas().isEmpty()).count();
+        long aiKataCount        = aiTrack   == null ? 0 : aiTrack.subjects().stream().flatMap(s -> s.themes().stream()).mapToLong(t -> t.katas().size()).sum();
+        long aiSolvedCount      = aiTrack   == null ? 0 : aiTrack.subjects().stream().flatMap(s -> s.themes().stream()).flatMap(t -> t.katas().stream()).filter(k -> kataProgress.isSolved(k.id())).count();
+
         model.addAttribute("kataThemes",         themes);
-        model.addAttribute("kataSolutions",       kataProgress);
-        model.addAttribute("kataCount",           kataService.getKataCount());
-        model.addAttribute("kataSolvedCount",     kataProgress.getSolvedKataCount());
-        model.addAttribute("kataChapterCount",    themes.size());
-        model.addAttribute("kataActiveChapters",  themes.stream().filter(t -> !t.katas().isEmpty()).count());
+        model.addAttribute("dojoTracks",         dojoTracks);
+        model.addAttribute("kataSolutions",      kataProgress);
+        model.addAttribute("kataCount",          kataService.getKataCount());
+        model.addAttribute("kataSolvedCount",    kataProgress.getSolvedKataCount());
+        model.addAttribute("javaChapterCount",   javaChapterCount);
+        model.addAttribute("javaActiveChapters", javaActiveChapters);
+        model.addAttribute("aiKataCount",        aiKataCount);
+        model.addAttribute("aiSolvedCount",      aiSolvedCount);
         var forksByLogin = forksService.getForks().stream()
             .collect(Collectors.toMap(
                 f -> f.login().toLowerCase(), f -> f, (a, b) -> a));
@@ -151,6 +165,49 @@ public class HubDashboardController {
         });
 
         return emitter;
+    }
+
+    // ── DOJO track/subject grouping ──────────────────────────────────────────
+
+    private static final Map<String, String> TRACK_NAMES  = Map.of("java", "Java", "ai", "IA Dev");
+    private static final Map<String, String> TRACK_ICONS  = Map.of("java", "☕",   "ai", "🤖");
+    private static final Map<String, String> SUBJECT_NAMES = Map.of(
+        "ocp21",     "OCP Java 21 (1Z0-830)",
+        "llm-local", "LLM Local"
+    );
+
+    public record SubjectView(String id, String name, List<KataCatalogLoader.ThemeEntry> themes) {
+        public long solvedCount(KataProgressService kp) {
+            return themes.stream().flatMap(t -> t.katas().stream()).filter(k -> kp.isSolved(k.id())).count();
+        }
+        public long totalKatas() {
+            return themes.stream().mapToLong(t -> t.katas().size()).sum();
+        }
+    }
+
+    public record TrackView(String id, String name, String icon, List<SubjectView> subjects) {}
+
+    private List<TrackView> buildDojoTracks(List<KataCatalogLoader.ThemeEntry> themes,
+                                            KataProgressService kp) {
+        var byTrack = new LinkedHashMap<String, Map<String, List<KataCatalogLoader.ThemeEntry>>>();
+        for (var t : themes) {
+            byTrack.computeIfAbsent(t.trackOrDefault(), k -> new LinkedHashMap<>())
+                   .computeIfAbsent(t.subjectOrDefault(), k -> new ArrayList<>())
+                   .add(t);
+        }
+        return byTrack.entrySet().stream()
+            .map(te -> new TrackView(
+                te.getKey(),
+                TRACK_NAMES.getOrDefault(te.getKey(), te.getKey()),
+                TRACK_ICONS.getOrDefault(te.getKey(), "📚"),
+                te.getValue().entrySet().stream()
+                    .map(se -> new SubjectView(
+                        se.getKey(),
+                        SUBJECT_NAMES.getOrDefault(se.getKey(), se.getKey()),
+                        se.getValue()))
+                    .toList()
+            ))
+            .toList();
     }
 
     public record HeroStatusView(

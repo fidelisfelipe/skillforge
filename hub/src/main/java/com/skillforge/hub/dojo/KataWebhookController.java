@@ -20,7 +20,7 @@ public class KataWebhookController {
     private final ObjectMapper objectMapper;
 
     private static final Set<String> HANDLED_ACTIONS = Set.of("opened", "synchronize", "reopened");
-    private static final Pattern KATA_BRANCH_PATTERN = Pattern.compile("^kata-([0-9]+[a-z]+)-", Pattern.CASE_INSENSITIVE);
+    private static final Pattern KATA_BRANCH_PATTERN = Pattern.compile("^kata-([a-z0-9]+)-", Pattern.CASE_INSENSITIVE);
 
     @PostMapping("/kata/webhook")
     public ResponseEntity<String> handleWebhook(

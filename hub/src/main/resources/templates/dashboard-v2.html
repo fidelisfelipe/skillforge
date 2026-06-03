@@ -193,10 +193,10 @@
     <!-- KPI strip -->
     <div class="kpi-grid mb">
         <div class="card kpi-card">
-            <div class="kpi-icon">🥋</div>
-            <div class="kpi-label">Katas Disponíveis</div>
-            <div class="kpi-value" th:text="${kataCount}">0</div>
-            <div class="kpi-sub">exercícios no catálogo</div>
+            <div class="kpi-icon">📤</div>
+            <div class="kpi-label">Soluções Submetidas</div>
+            <div class="kpi-value" th:text="${kataSolutions.getTotalSolutions()}">0</div>
+            <div class="kpi-sub">PRs validados pelo hub</div>
         </div>
         <div class="card kpi-card">
             <div class="kpi-icon">✅</div>
@@ -205,82 +205,128 @@
             <div class="kpi-sub" th:text="${kataCount > 0 ? #numbers.formatDecimal(kataSolvedCount * 100.0 / kataCount, 1, 0) + '% do catálogo' : '—'}">—</div>
         </div>
         <div class="card kpi-card">
-            <div class="kpi-icon">📤</div>
-            <div class="kpi-label">Soluções Submetidas</div>
-            <div class="kpi-value" th:text="${kataSolutions.getTotalSolutions()}">0</div>
-            <div class="kpi-sub">PRs validados pelo hub</div>
+            <div class="kpi-icon">☕</div>
+            <div class="kpi-label">Java · Chapters</div>
+            <div class="kpi-value" th:text="${javaActiveChapters} + '/' + ${javaChapterCount}">0/14</div>
+            <div class="kpi-sub">OCP Java 21 (1Z0-830)</div>
         </div>
         <div class="card kpi-card">
-            <div class="kpi-icon">📚</div>
-            <div class="kpi-label">Chapters Cobertos</div>
-            <div class="kpi-value" th:text="${kataActiveChapters} + '/' + ${kataChapterCount}">0/14</div>
-            <div class="kpi-sub">OCP Java 21 (1Z0-830)</div>
+            <div class="kpi-icon">🤖</div>
+            <div class="kpi-label">AI · Katas</div>
+            <div class="kpi-value" th:text="${aiSolvedCount} + '/' + ${aiKataCount}">0/0</div>
+            <div class="kpi-sub">SkillForge AI Track</div>
         </div>
     </div>
 
-    <!-- Dojo Board -->
+    <!-- DOJO Board -->
     <div class="card">
         <div class="card-hd">
             <div>
                 <div class="card-label">SkillForge</div>
-                <div class="card-title">Kata Board</div>
+                <div class="card-title">DOJO Board</div>
                 <div class="card-sub">
-                    Selecione um chapter · resolva o kata · abra o PR com <code style="font-size:11px;background:var(--s2);border:1px solid var(--border);padding:1px 5px;border-radius:4px;">heroId: {seu-id}</code>
+                    Resolva o kata · abra o PR com <code style="font-size:11px;background:var(--s2);border:1px solid var(--border);padding:1px 5px;border-radius:4px;">heroId: {seu-id}</code>
                 </div>
             </div>
         </div>
         <div style="padding:0;">
             <div style="display:grid;grid-template-columns:1fr 300px;">
 
-                <!-- Catalog -->
+                <!-- Catalog — Track → Subject → Theme hierarchy -->
                 <div style="padding:16px;border-right:1px solid var(--border);">
-                    <div th:each="theme : ${kataThemes}" style="margin-bottom:4px;">
-                        <details>
-                            <summary style="cursor:pointer;padding:8px 10px;border-radius:6px;
-                                            display:flex;justify-content:space-between;align-items:center;
-                                            background:var(--s2);user-select:none;list-style:none;
-                                            font-weight:600;font-size:13px;color:var(--text);">
-                                <span th:text="${theme.name()}">Theme</span>
-                                <span style="font-weight:400;font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:8px;">
-                                    <span th:if="${theme.katas().isEmpty()}"
-                                          style="color:var(--amber);font-size:10px;font-weight:600;
-                                                 background:var(--amber-soft);padding:1px 7px;border-radius:99px;">em breve</span>
-                                    <span th:unless="${theme.katas().isEmpty()}">
-                                        <span th:text="${theme.katas().size()}">0</span> katas ·
-                                        <span th:text="${theme.difficulty()}">-</span>
-                                    </span>
+
+                    <div th:each="track, tStat : ${dojoTracks}"
+                         th:style="${tStat.first} ? 'margin-bottom:0' : 'margin-top:20px'">
+
+                        <!-- Track header -->
+                        <div th:with="isAi=${track.id() == 'ai'}"
+                             style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                            <span style="font-size:14px;" th:text="${track.icon()}">☕</span>
+                            <span th:style="${isAi} ? 'font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--purple)' :
+                                                       'font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-2)'"
+                                  th:text="${track.name()}">Track</span>
+                            <div th:style="${isAi} ? 'flex:1;height:1px;background:var(--purple-mid)' :
+                                                      'flex:1;height:1px;background:var(--border)'"></div>
+                        </div>
+
+                        <!-- Subjects -->
+                        <div th:each="subject : ${track.subjects()}" style="margin-bottom:12px;">
+
+                            <!-- Subject header -->
+                            <div th:with="isAi=${track.id() == 'ai'}"
+                                 style="display:flex;align-items:center;gap:6px;
+                                        padding:4px 8px;border-radius:5px;margin-bottom:6px;"
+                                 th:style="${isAi} ? 'display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:5px;margin-bottom:6px;background:var(--purple-soft)' :
+                                                      'display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:5px;margin-bottom:6px;background:var(--s3)'">
+                                <span th:style="${isAi} ? 'font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--purple)' :
+                                                           'font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)'"
+                                      th:text="${subject.name()}">Subject</span>
+                                <div style="flex:1;"></div>
+                                <span th:with="isAi=${track.id() == 'ai'}"
+                                      style="font-size:10px;color:var(--text-3);"
+                                      th:text="${isAi} ?
+                                          (${subject.solvedCount(kataSolutions)} + '/' + ${subject.totalKatas()} + ' resolvidos') :
+                                          (${subject.themes().size()} + ' chapters')">
                                 </span>
-                            </summary>
-                            <div th:if="${!theme.katas().isEmpty()}" style="padding:4px 0 8px 12px;">
-                                <div th:each="kata : ${theme.katas()}"
-                                     style="display:flex;align-items:center;gap:10px;
-                                            padding:6px 8px;border-radius:5px;margin-bottom:2px;
-                                            background:var(--s1);">
-                                    <span th:if="${kataSolutions.isSolved(kata.id())}"
-                                          title="Resolvido"
-                                          style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></span>
-                                    <span th:unless="${kataSolutions.isSolved(kata.id())}"
-                                          title="Disponível"
-                                          style="width:8px;height:8px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;"></span>
-                                    <code style="font-size:11px;color:var(--text-2);width:80px;flex-shrink:0;"
-                                          th:text="${kata.id()}">KATA-001A</code>
-                                    <span style="font-size:12px;flex:1;color:var(--text);"
-                                          th:text="${kata.title()}">Title</span>
-                                    <span th:text="${kata.difficulty()}"
-                                          th:class="'kata-badge kata-badge-' + ${kata.difficulty()}">intermediate</span>
-                                    <span style="font-size:11px;color:var(--text-3);width:45px;text-align:right;flex-shrink:0;"
-                                          th:text="${kata.xpReward()} + ' xp'">80 xp</span>
-                                    <span th:if="${kataSolutions.isSolved(kata.id())}"
-                                          style="font-size:11px;color:#22c55e;width:55px;text-align:right;flex-shrink:0;">
-                                        <span th:text="${kataSolutions.getSolutionsFor(kata.id()).size()}">0</span> ✓
-                                    </span>
-                                </div>
                             </div>
-                        </details>
+
+                            <!-- Themes (accordions) -->
+                            <div th:each="theme : ${subject.themes()}" style="margin-bottom:4px;">
+                                <details th:attr="open=${track.id() == 'ai' ? 'open' : null}">
+                                    <summary th:with="isAi=${track.id() == 'ai'}"
+                                             style="cursor:pointer;padding:8px 10px;border-radius:6px;
+                                                    display:flex;justify-content:space-between;align-items:center;
+                                                    user-select:none;list-style:none;
+                                                    font-weight:600;font-size:13px;"
+                                             th:style="${isAi} ?
+                                                'cursor:pointer;padding:8px 10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;user-select:none;list-style:none;font-weight:600;font-size:13px;color:var(--purple);background:var(--purple-soft);border:1px solid var(--purple-mid)' :
+                                                'cursor:pointer;padding:8px 10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;user-select:none;list-style:none;font-weight:600;font-size:13px;color:var(--text);background:var(--s2)'">
+                                        <span th:text="${theme.name()}">Theme</span>
+                                        <span th:with="isAi=${track.id() == 'ai'}"
+                                              style="font-weight:400;font-size:11px;display:flex;align-items:center;gap:8px;"
+                                              th:style="${isAi} ? 'font-weight:400;font-size:11px;display:flex;align-items:center;gap:8px;color:var(--purple)' :
+                                                                   'font-weight:400;font-size:11px;display:flex;align-items:center;gap:8px;color:var(--text-3)'">
+                                            <span th:if="${theme.katas().isEmpty()}"
+                                                  style="font-size:10px;font-weight:600;
+                                                         background:var(--amber-soft);color:var(--amber);
+                                                         padding:1px 7px;border-radius:99px;">em breve</span>
+                                            <span th:unless="${theme.katas().isEmpty()}">
+                                                <span th:text="${theme.katas().size()}">0</span> katas ·
+                                                <span th:text="${theme.difficulty()}">-</span>
+                                            </span>
+                                        </span>
+                                    </summary>
+                                    <div th:if="${!theme.katas().isEmpty()}" style="padding:4px 0 8px 12px;">
+                                        <div th:each="kata : ${theme.katas()}"
+                                             style="display:flex;align-items:center;gap:10px;
+                                                    padding:6px 8px;border-radius:5px;margin-bottom:2px;
+                                                    background:var(--s1);">
+                                            <span th:if="${kataSolutions.isSolved(kata.id())}" title="Resolvido"
+                                                  style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></span>
+                                            <span th:unless="${kataSolutions.isSolved(kata.id())}" title="Disponível"
+                                                  style="width:8px;height:8px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;"></span>
+                                            <code style="font-size:11px;color:var(--text-2);width:90px;flex-shrink:0;"
+                                                  th:text="${kata.id()}">KATA-001A</code>
+                                            <span style="font-size:12px;flex:1;color:var(--text);"
+                                                  th:text="${kata.title()}">Title</span>
+                                            <span th:text="${kata.difficulty()}"
+                                                  th:class="'kata-badge kata-badge-' + ${kata.difficulty()}">intermediate</span>
+                                            <span style="font-size:11px;color:var(--text-3);width:45px;text-align:right;flex-shrink:0;"
+                                                  th:text="${kata.xpReward()} + ' xp'">80 xp</span>
+                                            <span th:if="${kataSolutions.isSolved(kata.id())}"
+                                                  style="font-size:11px;color:#22c55e;width:40px;text-align:right;flex-shrink:0;"
+                                                  th:text="${kataSolutions.getSolutionsFor(kata.id()).size()} + ' ✓'">0 ✓</span>
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+
+                        </div>
                     </div>
+
                 </div>
 
-                <!-- Recent solutions -->
+                <!-- Right panel: recent solutions + progress -->
                 <div style="padding:16px;">
                     <div style="font-size:11px;font-weight:600;color:var(--text-3);
                                 text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">
@@ -306,26 +352,40 @@
                         </div>
                     </div>
 
-                    <!-- Chapter progress -->
-                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-                        <div style="font-size:11px;font-weight:600;color:var(--text-3);
-                                    text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">
-                            Progresso por Chapter
+                    <!-- Progress per track → subject → theme -->
+                    <div th:each="track, tStat : ${dojoTracks}"
+                         th:with="isAi=${track.id() == 'ai'}"
+                         th:style="${tStat.first} ? 'margin-top:20px;padding-top:16px;border-top:1px solid var(--border)' :
+                                                     'margin-top:16px;padding-top:16px;border-top:1px solid var(--purple-mid)'">
+                        <!-- Track label -->
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                            <span style="font-size:11px;" th:text="${track.icon()}">☕</span>
+                            <span th:style="${isAi} ? 'font-size:11px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.06em' :
+                                                       'font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em'"
+                                  th:text="'Progresso ' + ${track.name()}">Progresso</span>
                         </div>
-                        <div th:each="theme : ${kataThemes}"
-                             style="margin-bottom:8px;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                                <span style="font-size:11px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"
-                                      th:text="${theme.name()}">Ch.01</span>
-                                <span style="font-size:10px;color:var(--text-3);flex-shrink:0;margin-left:6px;"
-                                      th:text="${kataSolutions.getSolvedCount(theme.katas())} + '/' + ${theme.katas().size()}">0/0</span>
-                            </div>
-                            <div class="chapter-progress">
-                                <div class="chapter-progress-fill"
-                                     th:style="${theme.katas().isEmpty() ? 'width:0%' : 'width:' + (kataSolutions.getSolvedCount(theme.katas()) * 100 / theme.katas().size()) + '%'}"></div>
+                        <!-- Subject → themes -->
+                        <div th:each="subject : ${track.subjects()}">
+                            <div th:if="${track.subjects().size() > 1}"
+                                 style="font-size:9px;font-weight:600;color:var(--text-3);
+                                        text-transform:uppercase;letter-spacing:.05em;
+                                        margin-bottom:4px;margin-top:6px;"
+                                 th:text="${subject.name()}"></div>
+                            <div th:each="theme : ${subject.themes()}" style="margin-bottom:8px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                                    <span style="font-size:11px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"
+                                          th:text="${theme.name()}">Theme</span>
+                                    <span style="font-size:10px;color:var(--text-3);flex-shrink:0;margin-left:6px;"
+                                          th:text="${kataSolutions.getSolvedCount(theme.katas())} + '/' + ${theme.katas().size()}">0/0</span>
+                                </div>
+                                <div class="chapter-progress">
+                                    <div class="chapter-progress-fill"
+                                         th:style="${theme.katas().isEmpty() ? 'width:0%' : 'width:' + (kataSolutions.getSolvedCount(theme.katas()) * 100 / theme.katas().size()) + '%;' + (isAi ? 'background:var(--purple)' : '')}"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
             </div>

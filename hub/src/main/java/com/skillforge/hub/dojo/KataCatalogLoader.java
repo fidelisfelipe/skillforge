@@ -49,8 +49,18 @@ public class KataCatalogLoader {
         String description,
         String difficulty,
         String certReference,
+        String track,
+        String subject,
         List<KataEntry> katas
-    ) {}
+    ) {
+        public String trackOrDefault() {
+            return track != null ? track : "java";
+        }
+        public String subjectOrDefault() {
+            if (subject != null) return subject;
+            return "ai".equals(trackOrDefault()) ? "llm-local" : "ocp21";
+        }
+    }
 
     public record KataEntry(
         String id,

@@ -735,6 +735,8 @@ themes:
   # ─────────────────────────────────────────────────────────────
   - id: ai-dev-local-llm
     name: "AI Dev — LLM Local"
+    track: ai
+    subject: llm-local
     description: "Construção de aplicações Java que se integram a modelos de linguagem rodando localmente via Ollama"
     difficulty: intermediate
     certReference: "SkillForge AI Dev Track — Local LLM Integration"
