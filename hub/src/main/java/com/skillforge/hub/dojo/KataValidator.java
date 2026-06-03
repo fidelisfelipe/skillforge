@@ -1,6 +1,8 @@
 package com.skillforge.hub.dojo;
 
 import com.skillforge.dojo.message.KataValidationResultMessage;
+import com.skillforge.hub.github.GitHubClient;
+import com.skillforge.hub.service.HeroRegistryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -26,6 +28,8 @@ public class KataValidator {
     private final GitHubService githubService;
     private final KataService kataService;
     private final KataProgressService kataProgress;
+    private final HeroRegistryService registry;
+    private final GitHubClient gitHubClient;
 
     private static final Map<String, String> KATA_SKILLS = Map.ofEntries(
         Map.entry("KATA-001A", "java-21-virtual-threads"),
@@ -76,7 +80,10 @@ public class KataValidator {
             String skill    = passed ? KATA_SKILLS.get(kataId) : null;
             String feedback = extractFeedback(output.toString(), passed);
 
-            if (passed) kataProgress.record(kataId, heroId, score, xpEarned);
+            if (passed) {
+                kataProgress.record(kataId, heroId, score, xpEarned);
+                creditKataToHeroIssue(heroId, kataId, xpEarned, skill);
+            }
 
             // 3. Publish AMQP result
             KataValidationResultMessage result = new KataValidationResultMessage(
@@ -100,6 +107,24 @@ public class KataValidator {
         } finally {
             cleanup(tempDir);
         }
+    }
+
+    private void creditKataToHeroIssue(String heroId, String kataId, int xpEarned, String skill) {
+        registry.getHeroById(heroId).ifPresentOrElse(hero -> {
+            try {
+                boolean credited = gitHubClient.addQuestXp(hero.issueNumber(), "kata-" + kataId.toLowerCase(), xpEarned);
+                if (credited) {
+                    log.info("💰 Kata XP credited | hero={} kata={} xp={}", heroId, kataId, xpEarned);
+                } else {
+                    log.debug("⏭️ Kata XP already credited | hero={} kata={}", heroId, kataId);
+                }
+                if (skill != null) {
+                    gitHubClient.addLabel(hero.issueNumber(), "skill-validated:" + skill);
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ Failed to credit kata XP to hero issue | hero={} kata={}: {}", heroId, kataId, e.getMessage());
+            }
+        }, () -> log.warn("⚠️ Hero not found in registry for kata XP credit | hero={}", heroId));
     }
 
     private String buildPrComment(String heroId, String kataId, boolean passed,

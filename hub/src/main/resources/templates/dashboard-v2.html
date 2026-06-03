@@ -115,48 +115,56 @@
         }
         .sol-row { display: flex; justify-content: space-between; align-items: center; }
 
-        /* Hero presence */
-        .hero-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 12px; padding: 16px;
+        /* Hero presence — dev-grouped layout */
+        .dev-list { padding: 8px 0; }
+        .dev-row {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
         }
-        .hero-tile {
-            background: var(--s2); border: 1.5px solid var(--border); border-radius: var(--r);
-            padding: 14px 10px; display: flex; flex-direction: column; align-items: center;
-            gap: 5px; text-align: center; transition: border-color .25s, background .25s;
+        .dev-row:last-child { border-bottom: none; }
+        .dev-hd {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
         }
-        .hero-tile.is-online { border-color: #86efac; background: var(--green-soft); }
-        .hero-avatar {
-            width: 42px; height: 42px; border-radius: 50%;
-            border: 2px solid var(--border); object-fit: cover;
+        .dev-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1.5px solid var(--border); object-fit: cover; flex-shrink: 0;
         }
-        .hero-avatar-fallback {
-            width: 42px; height: 42px; border-radius: 50%; background: var(--s3);
-            border: 2px solid var(--border); display: flex; align-items: center;
-            justify-content: center; font-size: 18px; color: var(--text-3);
+        .dev-avatar-fallback {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--s3);
+            border: 1.5px solid var(--border); display: flex; align-items: center;
+            justify-content: center; font-size: 14px; flex-shrink: 0;
         }
-        .hero-presence-row { display: flex; align-items: center; gap: 5px; }
+        .dev-login {
+            font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none;
+        }
+        .dev-login:hover { color: var(--blue); }
+        .fork-chip {
+            font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 99px;
+            background: var(--purple-soft); color: var(--purple); border: 1px solid #ddd6fe;
+        }
+        .dev-katas {
+            margin-left: auto; font-size: 11px; color: var(--text-3);
+        }
+        /* Hero sub-rows inside a dev */
+        .hero-subrows { display: flex; flex-direction: column; gap: 4px; padding-left: 42px; }
+        .hero-subrow {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 10px; border-radius: var(--r-sm);
+            background: var(--s2); border: 1px solid var(--border);
+            transition: border-color .2s, background .2s;
+        }
+        .hero-subrow.is-online { border-color: #86efac; background: var(--green-soft); }
         .hero-pdot {
             width: 7px; height: 7px; border-radius: 50%;
             background: var(--border-strong); flex-shrink: 0; transition: background .3s;
         }
-        .hero-pdot.live { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
-        .hero-name { font-size: 12px; font-weight: 600; color: var(--text); }
-        .hero-plbl { font-size: 10px; color: var(--text-3); }
-        .hero-meta-row { display: flex; gap: 6px; align-items: center; }
-        .hero-meta-item { font-size: 10px; color: var(--text-3); }
-        .fork-chip {
-            font-size: 9px; font-weight: 600; padding: 1px 5px;
-            border-radius: 99px; background: var(--purple-soft);
-            color: var(--purple); border: 1px solid #ddd6fe;
+        .hero-pdot.live { background: var(--green); box-shadow: 0 0 0 3px rgba(5,150,105,.15); }
+        .hero-id-code { font-family: var(--mono); font-size: 11px; color: var(--text); flex: 1; }
+        .hero-plbl    { font-size: 10px; color: var(--text-3); }
+        .hero-kata-badge {
+            font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 99px;
+            background: var(--blue-soft); color: var(--blue); border: 1px solid var(--blue-mid);
         }
-
-        /* Unregistered forkers */
-        .forker-row {
-            display: flex; align-items: center; gap: 10px;
-            padding: 8px 16px; border-top: 1px solid var(--border);
-        }
-        .forker-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
@@ -326,69 +334,67 @@
                 <div class="card-label">Guilda</div>
                 <div class="card-title">Heróis</div>
                 <div class="card-sub">
-                    <span th:text="${#lists.size(heroViews)}">0</span> registrado(s) ·
+                    <span th:text="${#lists.size(devViews)}">0</span> dev(s) ·
                     <span id="online-count"
-                          th:text="${#lists.size(heroViews.?[online == true])}">0</span> online ·
+                          th:text="${#lists.size(devViews.?[anyOnline == true])}">0</span> online ·
                     <span th:text="${forkCount}">0</span> fork(s)
                 </div>
             </div>
         </div>
 
-        <!-- Hero tiles -->
-        <div th:if="${#lists.isEmpty(heroViews)}"
+        <div th:if="${#lists.isEmpty(devViews)}"
              style="padding:40px;text-align:center;color:var(--text-3);font-size:13px;">
             Nenhum herói registrado ainda.
         </div>
-        <div class="hero-grid" th:unless="${#lists.isEmpty(heroViews)}">
-            <div th:each="h : ${heroViews}"
-                 th:id="'hero-' + ${h.heroId()}"
-                 th:class="${h.online()} ? 'hero-tile is-online' : 'hero-tile'">
 
-                <!-- Avatar -->
-                <img th:if="${h.avatarUrl() != null and !h.avatarUrl().isBlank()}"
-                     class="hero-avatar"
-                     th:src="${h.avatarUrl()}"
-                     th:alt="${h.heroName()}">
-                <div th:unless="${h.avatarUrl() != null and !h.avatarUrl().isBlank()}"
-                     class="hero-avatar-fallback">🦸</div>
+        <div class="dev-list" th:unless="${#lists.isEmpty(devViews)}">
+            <div class="dev-row" th:each="dev : ${devViews}">
 
-                <!-- Name -->
-                <div class="hero-name" th:text="${h.heroName() != null and !h.heroName().isBlank() ? h.heroName() : h.heroId()}">—</div>
-                <code style="font-size:10px;color:var(--text-3);" th:text="${h.heroId()}">id</code>
+                <!-- Dev header -->
+                <div class="dev-hd">
+                    <img th:if="${dev.avatarUrl() != null and !dev.avatarUrl().isBlank()}"
+                         class="dev-avatar"
+                         th:src="${dev.avatarUrl()}"
+                         th:alt="${dev.githubLogin()}">
+                    <div th:unless="${dev.avatarUrl() != null and !dev.avatarUrl().isBlank()}"
+                         class="dev-avatar-fallback">🧑‍💻</div>
 
-                <!-- Presence -->
-                <div class="hero-presence-row">
-                    <span th:class="${h.online()} ? 'hero-pdot live' : 'hero-pdot'"
-                          th:id="'pdot-' + ${h.heroId()}"></span>
-                    <span class="hero-plbl"
-                          th:id="'plbl-' + ${h.heroId()}"
-                          th:text="${h.lastSeenLabel()}">—</span>
+                    <a th:if="${dev.profileUrl() != null and !dev.profileUrl().isBlank()}"
+                       th:href="${dev.profileUrl()}" target="_blank" rel="noopener"
+                       class="dev-login"
+                       th:text="${dev.githubLogin()}">login</a>
+                    <span th:unless="${dev.profileUrl() != null and !dev.profileUrl().isBlank()}"
+                          class="dev-login"
+                          th:text="${dev.githubLogin()}">login</span>
+
+                    <span th:if="${dev.hasFork()}" class="fork-chip">fork</span>
+
+                    <span th:if="${dev.totalKatas() > 0}"
+                          class="dev-katas"
+                          th:text="${dev.totalKatas()} + ' kata(s)'">0 katas</span>
                 </div>
 
-                <!-- Meta: katas + fork badge -->
-                <div class="hero-meta-row">
-                    <span th:if="${h.katasSolved() > 0}"
-                          class="hero-meta-item"
-                          th:text="${h.katasSolved()} + ' kata(s)'">0 katas</span>
-                    <span th:if="${h.hasFork()}" class="fork-chip">fork</span>
-                </div>
-            </div>
-        </div>
+                <!-- Hero sub-rows -->
+                <div class="hero-subrows">
+                    <div th:each="h : ${dev.heroes()}"
+                         th:id="'hero-' + ${h.heroId()}"
+                         th:class="${h.online()} ? 'hero-subrow is-online' : 'hero-subrow'">
 
-        <!-- Forkers sem registro -->
-        <div th:unless="${#lists.isEmpty(unregisteredForks)}"
-             style="border-top:1px solid var(--border);padding:12px 16px 4px;">
-            <div style="font-size:10px;font-weight:600;letter-spacing:.07em;
-                        text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">
-                Forks sem registro
-            </div>
-            <div class="forker-row" th:each="f : ${unregisteredForks}">
-                <img class="forker-avatar" th:src="${f.avatarUrl()}" th:alt="${f.login()}">
-                <a th:href="${f.profileUrl()}" target="_blank" rel="noopener"
-                   style="font-size:12px;color:var(--text);font-weight:500;flex:1;"
-                   th:text="${f.login()}">login</a>
-                <span style="font-size:10px;color:var(--text-3);"
-                      th:text="${f.forkedAt()}">—</span>
+                        <span th:class="${h.online()} ? 'hero-pdot live' : 'hero-pdot'"
+                              th:id="'pdot-' + ${h.heroId()}"></span>
+
+                        <code class="hero-id-code" th:text="${h.heroId()}">id</code>
+
+                        <span class="hero-plbl"
+                              th:id="'plbl-' + ${h.heroId()}"
+                              th:text="${h.lastSeenLabel()}">—</span>
+
+                        <span th:if="${h.katasSolved() > 0}"
+                              class="hero-kata-badge"
+                              th:text="${h.katasSolved()} + ' kata(s)'">0</span>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -404,30 +410,41 @@
 
     es.addEventListener('HERO_ONLINE', e => {
         const { heroId } = JSON.parse(e.data);
-        const tile = document.getElementById('hero-' + heroId);
-        if (tile) {
-            tile.classList.add('is-online');
+        const row = document.getElementById('hero-' + heroId);
+        if (row) {
+            row.classList.add('is-online');
             const pdot = document.getElementById('pdot-' + heroId);
             const plbl = document.getElementById('plbl-' + heroId);
             if (pdot) pdot.className = 'hero-pdot live';
             if (plbl) plbl.textContent = 'online';
         }
         const cnt = document.getElementById('online-count');
-        if (cnt) cnt.textContent = document.querySelectorAll('.hero-tile.is-online').length;
+        if (cnt) {
+            // conta devs com pelo menos 1 hero online
+            const devRows = document.querySelectorAll('.dev-row');
+            let online = 0;
+            devRows.forEach(dr => { if (dr.querySelector('.hero-subrow.is-online')) online++; });
+            cnt.textContent = online;
+        }
     });
 
     es.addEventListener('HERO_OFFLINE', e => {
         const { heroId } = JSON.parse(e.data);
-        const tile = document.getElementById('hero-' + heroId);
-        if (tile) {
-            tile.classList.remove('is-online');
+        const row = document.getElementById('hero-' + heroId);
+        if (row) {
+            row.classList.remove('is-online');
             const pdot = document.getElementById('pdot-' + heroId);
             const plbl = document.getElementById('plbl-' + heroId);
             if (pdot) pdot.className = 'hero-pdot';
             if (plbl) plbl.textContent = 'offline';
         }
         const cnt = document.getElementById('online-count');
-        if (cnt) cnt.textContent = document.querySelectorAll('.hero-tile.is-online').length;
+        if (cnt) {
+            const devRows = document.querySelectorAll('.dev-row');
+            let online = 0;
+            devRows.forEach(dr => { if (dr.querySelector('.hero-subrow.is-online')) online++; });
+            cnt.textContent = online;
+        }
     });
 </script>
 </body>

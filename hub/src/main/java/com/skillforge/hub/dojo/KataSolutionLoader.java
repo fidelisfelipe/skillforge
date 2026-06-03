@@ -2,6 +2,8 @@ package com.skillforge.hub.dojo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skillforge.hub.github.GitHubClient;
+import com.skillforge.hub.service.HeroRegistryService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,8 @@ public class KataSolutionLoader {
 
     private final KataProgressService kataProgress;
     private final ObjectMapper objectMapper;
+    private final HeroRegistryService registry;
+    private final GitHubClient gitHubClient;
 
     private static final Pattern BRANCH_PATTERN =
         Pattern.compile("^kata-([0-9]+[a-z]+)-", Pattern.CASE_INSENSITIVE);
@@ -40,6 +44,8 @@ public class KataSolutionLoader {
         Pattern.compile("\\*\\*Score\\*\\*\\s*\\|\\s*(\\d+)/100");
     private static final Pattern XP_PATTERN =
         Pattern.compile("\\*\\*XP earned\\*\\*\\s*\\|\\s*(\\d+)");
+    private static final Pattern SKILL_PATTERN =
+        Pattern.compile("\\*\\*Skill unlocked\\*\\*\\s*\\|\\s*`([^`]+)`");
 
     @PostConstruct
     void loadFromGitHub() {
@@ -90,7 +96,9 @@ public class KataSolutionLoader {
 
                     int score    = parseGroup(SCORE_PATTERN, commentBody, 100);
                     int xpEarned = parseGroup(XP_PATTERN, commentBody, 80);
+                    String skill = parseSkill(commentBody);
                     kataProgress.recordAt(kataId, heroId, score, xpEarned, ts);
+                    creditKataToHeroIssue(heroId, kataId, xpEarned, skill);
                     loaded++;
                     break;
                 }
@@ -101,6 +109,27 @@ public class KataSolutionLoader {
         } catch (Exception e) {
             log.warn("⚠️ Failed to load kata solutions from GitHub: {}", e.getMessage());
         }
+    }
+
+    private void creditKataToHeroIssue(String heroId, String kataId, int xpEarned, String skill) {
+        registry.getHeroById(heroId).ifPresent(hero -> {
+            try {
+                boolean credited = gitHubClient.addQuestXp(hero.issueNumber(), "kata-" + kataId.toLowerCase(), xpEarned);
+                if (credited) {
+                    log.info("💰 Retroactive kata XP credited | hero={} kata={} xp={}", heroId, kataId, xpEarned);
+                }
+                if (skill != null) {
+                    gitHubClient.addLabel(hero.issueNumber(), "skill-validated:" + skill);
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ Failed to retroactively credit kata XP | hero={} kata={}: {}", heroId, kataId, e.getMessage());
+            }
+        });
+    }
+
+    private String parseSkill(String commentBody) {
+        Matcher m = SKILL_PATTERN.matcher(commentBody);
+        return m.find() ? m.group(1) : null;
     }
 
     private String extractHeroId(String body) {

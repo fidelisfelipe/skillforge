@@ -68,39 +68,60 @@ public class HubDashboardController {
         model.addAttribute("kataSolvedCount",     kataProgress.getSolvedKataCount());
         model.addAttribute("kataChapterCount",    themes.size());
         model.addAttribute("kataActiveChapters",  themes.stream().filter(t -> !t.katas().isEmpty()).count());
-        model.addAttribute("heroStats",            kataProgress.getHeroStats());
-        model.addAttribute("forks",                forksService.getForks());
-        model.addAttribute("forkCount",            forksService.getForkCount());
+        var forksByLogin = forksService.getForks().stream()
+            .collect(Collectors.toMap(
+                f -> f.login().toLowerCase(), f -> f, (a, b) -> a));
 
-        var forkerLogins = forksService.getForks().stream()
-            .map(GitHubForksService.ForkEntry::login).collect(Collectors.toSet());
-        var statsMap = kataProgress.getHeroStats().stream()
+        var statsMap    = kataProgress.getHeroStats().stream()
             .collect(Collectors.toMap(KataProgressService.HeroStats::heroId, s -> s));
-        var onlineSet  = presence != null ? presence.getOnlineHeroes() : Set.<String>of();
-        var lastSeenMap = presence != null ? presence.getLastSeen()    : Map.<String, Instant>of();
+        var onlineSet   = presence != null ? presence.getOnlineHeroes() : Set.<String>of();
+        var lastSeenMap = presence != null ? presence.getLastSeen()     : Map.<String, Instant>of();
 
-        var heroViews = registry.getHeroes().stream()
-            .map(h -> new HeroStatusView(
-                h.heroId(), h.heroName(), h.avatarUrl(), h.githubLogin(),
-                onlineSet.contains(h.heroId()),
-                lastSeenLabel(lastSeenMap.get(h.heroId()), onlineSet.contains(h.heroId())),
-                forkerLogins.contains(h.githubLogin()),
-                Optional.ofNullable(statsMap.get(h.heroId()))
-                    .map(KataProgressService.HeroStats::katasSolved).orElse(0)
+        // HeroStatusView por hero registrado
+        var allHeroViews = registry.getHeroes().stream()
+            .map(h -> {
+                String login = h.githubLogin() != null ? h.githubLogin().toLowerCase() : "";
+                return new HeroStatusView(
+                    h.heroId(), h.heroName(), h.avatarUrl(), h.githubLogin(),
+                    onlineSet.contains(h.heroId()),
+                    lastSeenLabel(lastSeenMap.get(h.heroId()), onlineSet.contains(h.heroId())),
+                    forksByLogin.containsKey(login),
+                    Optional.ofNullable(statsMap.get(h.heroId()))
+                        .map(KataProgressService.HeroStats::katasSolved).orElse(0)
+                );
+            }).toList();
+
+        // Agrupa por dev (githubLogin); heroes sem login ficam sozinhos
+        var devViews = allHeroViews.stream()
+            .collect(Collectors.groupingBy(
+                h -> h.githubLogin() != null && !h.githubLogin().isBlank()
+                    ? h.githubLogin().toLowerCase()
+                    : "__" + h.heroId()
             ))
-            .sorted(Comparator.comparing(HeroStatusView::online).reversed()
-                .thenComparingInt(HeroStatusView::katasSolved).reversed())
+            .entrySet().stream()
+            .map(e -> {
+                String key   = e.getKey();
+                String login = key.startsWith("__") ? "" : key;
+                var fork     = forksByLogin.get(login);
+                String avatarUrl = fork != null ? fork.avatarUrl()
+                    : e.getValue().stream().map(HeroStatusView::avatarUrl)
+                        .filter(a -> a != null && !a.isBlank()).findFirst().orElse("");
+                String profileUrl  = fork != null ? fork.profileUrl() : "";
+                String displayName = !login.isBlank()
+                    ? e.getValue().get(0).githubLogin()
+                    : e.getValue().get(0).heroId();
+                var heroes = e.getValue().stream()
+                    .sorted(Comparator.comparing(HeroStatusView::online).reversed()
+                        .thenComparingInt(HeroStatusView::katasSolved).reversed())
+                    .toList();
+                return new DevView(displayName, avatarUrl, profileUrl, fork != null, heroes);
+            })
+            .sorted(Comparator.comparing(DevView::anyOnline).reversed()
+                .thenComparingInt(DevView::totalKatas).reversed())
             .toList();
-        model.addAttribute("heroViews", heroViews);
 
-        // forkers que ainda não se registraram
-        var registeredLogins = registry.getHeroes().stream()
-            .map(h -> h.githubLogin() != null ? h.githubLogin().toLowerCase() : "")
-            .collect(Collectors.toSet());
-        var unregisteredForks = forksService.getForks().stream()
-            .filter(f -> !registeredLogins.contains(f.login().toLowerCase()))
-            .toList();
-        model.addAttribute("unregisteredForks", unregisteredForks);
+        model.addAttribute("devViews",  devViews);
+        model.addAttribute("forkCount", forksService.getForkCount());
     }
 
     @GetMapping(value = "/events", produces = "text/event-stream")
@@ -136,6 +157,17 @@ public class HubDashboardController {
         boolean hasFork,
         int katasSolved
     ) {}
+
+    public record DevView(
+        String githubLogin,
+        String avatarUrl,
+        String profileUrl,
+        boolean hasFork,
+        List<HeroStatusView> heroes
+    ) {
+        public boolean anyOnline() { return heroes.stream().anyMatch(HeroStatusView::online); }
+        public int totalKatas()    { return heroes.stream().mapToInt(HeroStatusView::katasSolved).sum(); }
+    }
 
     private static String lastSeenLabel(Instant ts, boolean online) {
         if (online) return "online";

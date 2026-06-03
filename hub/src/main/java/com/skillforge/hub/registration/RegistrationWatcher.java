@@ -6,6 +6,7 @@ import com.skillforge.hub.onboarding.HubUrlProvider;
 import com.skillforge.hub.onboarding.OnboardingTokenStore;
 import com.skillforge.hub.service.HeroRegistryService;
 import com.skillforge.hub.web.HubDashboardController;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +20,7 @@ import java.util.StringJoiner;
 public class RegistrationWatcher {
 
     private static final Logger log = LoggerFactory.getLogger(RegistrationWatcher.class);
+    private static final int ONBOARDING_XP = 50;
 
     private final GitHubClient github;
     private final HeroRegistryService registry;
@@ -41,6 +43,23 @@ public class RegistrationWatcher {
             log.warn("GITHUB_TOKEN não configurado — o watcher não conseguirá postar comentários nem aplicar labels.");
         } else {
             log.info("Guild Hub Registration Watcher ativo — polling a cada 2 minutos.");
+        }
+    }
+
+    @PostConstruct
+    void retroactiveOnboardingXp() {
+        if (!github.hasToken()) return;
+        try {
+            registry.getHeroes().forEach(hero -> {
+                try {
+                    boolean credited = github.addQuestXp(hero.issueNumber(), "onboarding", ONBOARDING_XP);
+                    if (credited) log.info("💰 Retroactive onboarding XP credited | hero={}", hero.heroId());
+                } catch (Exception e) {
+                    log.warn("⚠️ Failed retroactive onboarding XP for {}: {}", hero.heroId(), e.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            log.warn("⚠️ Retroactive onboarding XP scan failed: {}", e.getMessage());
         }
     }
 
@@ -105,6 +124,7 @@ public class RegistrationWatcher {
 
         github.postComment(issueNumber, comment);
         github.addLabel(issueNumber, "registered");
+        github.addQuestXp(issueNumber, "onboarding", ONBOARDING_XP);
 
         String token = tokenStore.generate(heroId, opener, issueNumber);
         String onboardingLink = "%s/onboard/amqp?token=%s".formatted(hubUrlProvider.get(), token);
