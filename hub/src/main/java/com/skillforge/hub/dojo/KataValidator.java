@@ -40,7 +40,8 @@ public class KataValidator {
         Map.entry("KATA-002C", "java-21-records"),
         Map.entry("KATA-003A", "java-21-pattern-matching"),
         Map.entry("KATA-003B", "java-21-pattern-matching"),
-        Map.entry("KATA-003C", "java-21-pattern-matching")
+        Map.entry("KATA-003C", "java-21-pattern-matching"),
+        Map.entry("KATA-AI01A", "ai-local-llm-integration")
     );
 
     private static final Map<String, Integer> KATA_XP = Map.ofEntries(

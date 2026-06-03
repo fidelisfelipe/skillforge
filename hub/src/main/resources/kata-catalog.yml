@@ -727,3 +727,73 @@ themes:
     difficulty: intermediate
     certReference: "OCP Java 21 (1Z0-830) — Chapter 14"
     katas: []
+
+  # ─────────────────────────────────────────────────────────────
+  # AI Dev — Local LLM
+  # Integração de aplicações Java com modelos de linguagem locais
+  # via Ollama HTTP API · prompt engineering · JSON parsing
+  # ─────────────────────────────────────────────────────────────
+  - id: ai-dev-local-llm
+    name: "AI Dev — LLM Local"
+    description: "Construção de aplicações Java que se integram a modelos de linguagem rodando localmente via Ollama"
+    difficulty: intermediate
+    certReference: "SkillForge AI Dev Track — Local LLM Integration"
+    katas:
+      - id: KATA-AI01A
+        title: "Triagem de Issues com LLM Local"
+        difficulty: intermediate
+        xpReward: 130
+        templateBranch: kata-ai01a-template
+        className: IssueTriager
+        spec: |
+          Implemente a classe `IssueTriager` que usa um LLM local via Ollama para classificar automaticamente issues de repositórios GitHub.
+
+          ## Contexto
+
+          O Ollama está rodando em `http://localhost:11434`. A comunicação usa `POST /api/generate` com payload JSON e `stream: false`.
+          O campo configurável `String ollamaBaseUrl` já existe no template e é usado pelos testes (WireMock sobrescreve a URL).
+
+          ## Tipos fornecidos no template (não implementar)
+
+          ```java
+          public record IssueInput(String title, String body) {}
+
+          public enum Category { BUG, FEATURE, QUESTION, DOCS, OTHER }
+          public enum Priority  { LOW, MEDIUM, HIGH }
+
+          public record TriageResult(Category category, Priority priority, String suggestedLabel) {}
+          ```
+
+          ## Métodos a implementar
+
+          ### `TriageResult triage(IssueInput issue)`
+          Classifica a issue recebida. Passos obrigatórios:
+          1. Construir o prompt chamando `buildPrompt(issue)`.
+          2. Fazer `POST {ollamaBaseUrl}/api/generate` com body JSON:
+             `{ "model": "llama3.2", "prompt": "<prompt>", "stream": false }`
+          3. Ler o campo `"response"` do JSON retornado pelo Ollama.
+          4. Extrair os valores chamando `parseResult(llmResponse)` e retornar o resultado.
+
+          Use `java.net.http.HttpClient` e `java.net.http.HttpRequest` (disponíveis em Java 11+).
+          Use `com.fasterxml.jackson.databind.ObjectMapper` para serialização/desserialização (já no classpath via Spring Boot).
+
+          ### `String buildPrompt(IssueInput issue)`
+          Constrói um prompt em inglês instruindo o LLM a responder **somente** com JSON válido no seguinte formato, sem texto adicional:
+          ```json
+          { "category": "BUG|FEATURE|QUESTION|DOCS|OTHER", "priority": "LOW|MEDIUM|HIGH", "label": "texto-curto-com-hifens" }
+          ```
+          Use text block Java (`"""..."""`) para o template do prompt.
+          O prompt deve incluir o `issue.title()` e `issue.body()` como contexto.
+
+          ### `TriageResult parseResult(String llmResponse)`
+          Extrai o JSON da resposta do LLM. A resposta pode vir envolta em bloco markdown (` ```json ... ``` `): trate esse caso extraindo apenas o conteúdo entre as crases.
+          Desserializa o JSON e constrói um `TriageResult`.
+          Se o JSON for inválido, estiver faltando campos ou os valores não corresponderem aos enums, retorne:
+          `TriageResult(Category.OTHER, Priority.LOW, "needs-triage")`
+
+          ## Restrições
+
+          - Não usar bibliotecas HTTP além de `java.net.http.*`
+          - Não usar LangChain4j nem outros wrappers de LLM — chame a API REST do Ollama diretamente
+          - O timeout da requisição HTTP deve ser de 30 segundos
+          - A classe deve compilar e os testes devem passar sem Ollama instalado (WireMock mockeia as respostas)
