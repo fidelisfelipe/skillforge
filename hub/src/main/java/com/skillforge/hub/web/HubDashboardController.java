@@ -1,5 +1,6 @@
 package com.skillforge.hub.web;
 
+import com.skillforge.hub.GuildDashboardProperties;
 import com.skillforge.hub.dojo.GitHubForksService;
 import com.skillforge.hub.dojo.KataProgressService;
 import com.skillforge.hub.dojo.KataService;
@@ -29,6 +30,7 @@ public class HubDashboardController {
     private final KataService kataService;
     private final KataProgressService kataProgress;
     private final GitHubForksService forksService;
+    private final GuildDashboardProperties dashboardProps;
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     // @Lazy quebra a dependência circular: HeroPresenceService → HubDashboardController
@@ -37,12 +39,14 @@ public class HubDashboardController {
 
     public HubDashboardController(HeroRegistryService registry, QuestBoardService questBoard,
                                   KataService kataService, KataProgressService kataProgress,
-                                  GitHubForksService forksService) {
+                                  GitHubForksService forksService,
+                                  GuildDashboardProperties dashboardProps) {
         this.registry = registry;
         this.questBoard = questBoard;
         this.kataService = kataService;
         this.kataProgress = kataProgress;
         this.forksService = forksService;
+        this.dashboardProps = dashboardProps;
     }
 
     @GetMapping("/")
@@ -79,6 +83,7 @@ public class HubDashboardController {
 
         // HeroStatusView por hero registrado
         var allHeroViews = registry.getHeroes().stream()
+            .filter(h -> dashboardProps.isShowGenericHeroes() || !isGenericHero(h.heroId(), h.githubLogin()))
             .map(h -> {
                 String login = h.githubLogin() != null ? h.githubLogin().toLowerCase() : "";
                 return new HeroStatusView(
@@ -87,7 +92,8 @@ public class HubDashboardController {
                     lastSeenLabel(lastSeenMap.get(h.heroId()), onlineSet.contains(h.heroId())),
                     forksByLogin.containsKey(login),
                     Optional.ofNullable(statsMap.get(h.heroId()))
-                        .map(KataProgressService.HeroStats::katasSolved).orElse(0)
+                        .map(KataProgressService.HeroStats::katasSolved).orElse(0),
+                    h.xp()
                 );
             }).toList();
 
@@ -155,7 +161,8 @@ public class HubDashboardController {
         boolean online,
         String lastSeenLabel,
         boolean hasFork,
-        int katasSolved
+        int katasSolved,
+        int xp
     ) {}
 
     public record DevView(
@@ -167,6 +174,12 @@ public class HubDashboardController {
     ) {
         public boolean anyOnline() { return heroes.stream().anyMatch(HeroStatusView::online); }
         public int totalKatas()    { return heroes.stream().mapToInt(HeroStatusView::katasSolved).sum(); }
+        public int totalXp()       { return heroes.stream().mapToInt(HeroStatusView::xp).sum(); }
+    }
+
+    private static boolean isGenericHero(String heroId, String githubLogin) {
+        return githubLogin == null || githubLogin.isBlank()
+            || githubLogin.equalsIgnoreCase(heroId);
     }
 
     private static String lastSeenLabel(Instant ts, boolean online) {
