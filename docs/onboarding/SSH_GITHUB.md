@@ -80,7 +80,39 @@ Hi <seu-usuario>! You've successfully authenticated, but GitHub does not provide
 
 ---
 
-## Passo 7 — Clonar o repositório
+## Passo 7 — Configurar identidade Git no repositório
+
+> Faça isso **antes do primeiro commit**. Se você usa máquina corporativa, o Git pode pegar seu usuário da empresa automaticamente — o que vai aparecer nos commits do projeto.
+
+Configure nome e e-mail **apenas para este repositório** (não altera sua config global):
+
+```powershell
+git config user.name "seu-usuario-github"
+git config user.email "seu-email-pessoal@exemplo.com"
+```
+
+Confirme:
+
+```powershell
+git config user.name
+git config user.email
+```
+
+> Nunca use `--global` aqui. O `--global` altera todos os repositórios da máquina, inclusive os corporativos.
+
+### Corrigi depois do commit? Veja como corrigir
+
+Se já commitou com a identidade errada, execute depois de configurar name/email acima:
+
+```powershell
+git commit --amend --reset-author --no-edit
+```
+
+Isso reescreve o autor do último commit sem alterar a mensagem. Só funciona antes de fazer `git push`.
+
+---
+
+## Passo 8 — Clonar o repositório
 
 ```powershell
 git clone git@github.com:fidelisfelipe/skillforge.git
