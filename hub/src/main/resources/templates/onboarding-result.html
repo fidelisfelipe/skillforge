@@ -223,6 +223,35 @@
           <span>Confirme o <code style="font-family:var(--mono);font-size:11px;background:var(--blue-soft);border:1px solid var(--blue-mid);border-radius:3px;padding:1px 5px;color:var(--blue);">AMQP_URL</code> no painel da instância <strong>skillforge</strong> em <a href="https://customer.cloudamqp.com" target="_blank">customer.cloudamqp.com</a> após aceitar o convite.</span>
         </div>
 
+        <!-- mTLS client cert — only shown when guild.mtls.enabled=true -->
+        <div th:if="${clientCertB64}" style="margin-top:20px;">
+          <hr class="divider">
+          <div class="section-title">Certificado de acesso (mTLS)</div>
+          <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">
+            O hub está protegido por mTLS. Instale este certificado no seu browser para aceder ao dashboard.
+          </p>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <a th:id="'certLink'"
+               th:href="'data:application/x-pkcs12;base64,' + ${clientCertB64}"
+               th:download="${clientCertFilename}"
+               style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--blue);color:#fff;border-radius:var(--r-sm);font-size:13px;font-weight:600;text-decoration:none;">
+              ⬇ <span th:text="${clientCertFilename}">cert.p12</span>
+            </a>
+            <span style="font-size:12px;color:var(--text-3);">válido por 365 dias</span>
+          </div>
+          <div class="env-block" style="margin-bottom:8px;">
+            <button class="copy-btn" onclick="copyPass()" id="copyPassBtn">Copiar</button><span class="var-key">Password</span>=<span class="var-val" th:id="'certPass'" th:text="${clientCertPassword}"></span>
+          </div>
+          <div class="env-note">
+            <span class="env-note-icon">🔒</span>
+            <span>
+              <strong>Chrome/Edge:</strong> <code>chrome://settings/certificates</code> → <em>Personal</em> → Import<br>
+              <strong>Firefox:</strong> <code>about:preferences#privacy</code> → <em>View Certificates</em> → <em>Your Certificates</em> → Import<br>
+              Guarde a password — não será exibida novamente.
+            </span>
+          </div>
+        </div>
+
         <div class="meta-row">
           <span>Hero: <code th:text="${heroId}"></code></span>
           <span class="meta-sep">·</span>
@@ -267,6 +296,14 @@
 </main>
 
 <script>
+  function copyPass() {
+    const pass = document.getElementById('certPass').textContent;
+    navigator.clipboard.writeText(pass).then(() => {
+      const btn = document.getElementById('copyPassBtn');
+      btn.textContent = 'Copiado!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
   function copyEnv() {
     const block = document.getElementById('envBlock');
     const text = [...block.childNodes]

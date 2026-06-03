@@ -2,18 +2,29 @@ package com.skillforge.hub.onboarding;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
+
 @Controller
 @RequestMapping("/onboard/amqp")
 public class AmqpOnboardingController {
 
     private static final Logger log = LoggerFactory.getLogger(AmqpOnboardingController.class);
+
+    private static final String CERT_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    private static final SecureRandom RNG = new SecureRandom();
 
     private final OnboardingTokenStore tokenStore;
     private final OnboardingTokenValidator tokenValidator;
@@ -22,6 +33,10 @@ public class AmqpOnboardingController {
     private final HubUrlProvider hubUrlProvider;
     private final String amqpUrl;
     private final String amqpExchange;
+
+    // Optional — only present when guild.mtls.enabled=true
+    @Autowired(required = false) @Lazy
+    private MtlsCaService mtlsCa;
 
     public AmqpOnboardingController(
             OnboardingTokenStore tokenStore,
@@ -107,6 +122,40 @@ public class AmqpOnboardingController {
         model.addAttribute("invited", invited);
         model.addAttribute("amqpUrl", amqpUrl);
         model.addAttribute("amqpExchange", amqpExchange);
+
+        if (mtlsCa != null) {
+            try {
+                String password = randomPassword(12);
+                byte[] p12 = mtlsCa.issuePkcs12(login, password);
+                model.addAttribute("clientCertB64", Base64.getEncoder().encodeToString(p12));
+                model.addAttribute("clientCertPassword", password);
+                model.addAttribute("clientCertFilename", login + "-skillforge.p12");
+            } catch (Exception e) {
+                log.warn("⚠️ Falha ao emitir cert mTLS para @{}: {}", login, e.getMessage());
+            }
+        }
+
         return "onboarding-result";
+    }
+
+    @GetMapping("/ca.pem")
+    public ResponseEntity<byte[]> downloadCa() {
+        if (mtlsCa == null) return ResponseEntity.notFound().build();
+        try {
+            byte[] pem = mtlsCa.getCaCertPem().getBytes(StandardCharsets.UTF_8);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "application/x-pem-file")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=skillforge-ca.pem")
+                    .body(pem);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    private static String randomPassword(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++)
+            sb.append(CERT_CHARS.charAt(RNG.nextInt(CERT_CHARS.length())));
+        return sb.toString();
     }
 }
